@@ -278,6 +278,32 @@
   .sinoVazio { padding: 18px; text-align: center; color: var(--muted); font-size: 13px; }
   @media (max-width: 700px) { .sinoPainel { position: fixed; top: 54px; right: 8px; left: auto; width: min(340px, calc(100vw - 16px)); max-height: 75vh; } }
 
+  /* Boletos na bipagem */
+  .boletos { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 8px; background: var(--bg); }
+  .boletosTopo { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+  .boleto { display: grid; grid-template-columns: auto 1fr auto auto auto; gap: 4px 10px; align-items: center; font-size: 13.5px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
+  .boleto .muted { font-size: 12px; }
+  @media (max-width: 520px) { .boleto { grid-template-columns: auto 1fr auto; } .boleto .muted { grid-column: 2; } }
+  .previaTopo { display: flex; justify-content: space-between; gap: 8px; align-items: start; }
+
+  /* Detalhes da nota */
+  .fundoModal .card.detalhes { width: min(820px, 100%); }
+  .detTopo { display: flex; gap: 12px; align-items: start; justify-content: space-between; }
+  .detChips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .detDados { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px 18px; }
+  .detDados > div > span:first-child { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .detDados .sub { display: block; font-size: 12px; color: var(--muted); }
+  .chaveDet { font-size: 12.5px; word-spacing: .1em; }
+  .linhaDig { font-size: 12px; word-break: break-word; }
+  .detAcoes { display: flex; gap: 8px; flex-wrap: wrap; }
+  #detConteudo { display: grid; gap: 12px; }
+  #detConteudo h3 { margin-top: 4px; }
+  a.botaoLink:not(.primario), label.botaoArquivo { border: 1px solid var(--line); background: var(--card); color: var(--ink); display: inline-flex; align-items: center; padding: 9px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; text-decoration: none; }
+  tr[data-id] { cursor: pointer; }
+  #detConteudo .linhaApp { display: flex; flex-wrap: nowrap; gap: 8px; align-items: stretch; }
+  #detConteudo .linhaApp input { flex: 1 1 auto; min-width: 0; width: auto; }
+  #detConteudo .linhaApp button { flex: 0 0 auto; }
+
   .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--ink); color: var(--bg);
     padding: 10px 16px; border-radius: 10px; font-weight: 500; z-index: 20; max-width: calc(100% - 32px); }
   .vazio { padding: 20px; text-align: center; color: var(--muted); }
@@ -362,7 +388,7 @@
       <div class="card bip">
         <div>
           <h2>Bipar nota recebida</h2>
-          <div class="muted" style="font-size:13px"><span class="soToque">Toque em <b>Câmera</b> e aponte para o código de barras do DANFE, ou digite os 44 números.</span><span class="soMouse">Passe o leitor USB no código de barras do DANFE, ou digite os 44 números e aperte <b>Enter</b>. O cursor volta sozinho para o campo.</span></div>
+          <div class="muted" style="font-size:13px"><span class="soToque">Toque em <b>Câmera</b> e aponte para o código de barras do DANFE. Depois, bipe os boletos da nota.</span><span class="soMouse">Passe o leitor USB no código de barras do DANFE e, em seguida, nos boletos da nota. Também dá para digitar a chave (44 números) ou a linha digitável do boleto.</span></div>
         </div>
         <div id="camPainel" class="camPainel" hidden>
           <video id="camVideo" playsinline muted></video>
@@ -375,7 +401,7 @@
           <button type="button" id="camFoto" class="primario">Tirar foto do código</button>
         </div>
         <div class="campoChave">
-          <input id="chave" inputmode="numeric" enterkeyhint="send" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Chave (44 dígitos)" aria-label="Chave de acesso">
+          <input id="chave" inputmode="numeric" enterkeyhint="send" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Chave da nota ou boleto" aria-label="Chave da nota ou código do boleto">
           <button type="button" id="btCamera" class="btCamera primario" aria-label="Ler com a câmera">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h3l2-3h6l2 3h3v13H4z"/><circle cx="12" cy="13" r="4"/></svg>
             <span id="btCameraTxt">Câmera</span>
@@ -383,12 +409,17 @@
         </div>
         <input type="file" id="fotoCodigo" accept="image/*" capture="environment" hidden>
         <div id="previa" class="previa" hidden>
-          <div class="chaveFmt" id="pvChave"></div>
+          <div class="previaTopo"><div class="chaveFmt" id="pvChave"></div><button type="button" class="copiar" id="btDescartar">Descartar</button></div>
           <div class="dados">
             <div><span>Fornecedor (CNPJ)</span><b id="pvEmit" class="mono"></b></div>
             <div><span>Nota / Série</span><b id="pvNum" class="mono"></b></div>
             <div><span>Emissão</span><b id="pvEmi" class="mono"></b></div>
           </div>
+        </div>
+        <div id="boxBoletos" class="boletos" hidden>
+          <div class="boletosTopo"><b id="boletosTitulo">Boletos desta nota</b><span class="muted mono" id="boletosResumo" style="font-size:13px"></span></div>
+          <div id="listaBoletos" style="display:grid;gap:6px"></div>
+          <div class="muted" style="font-size:12.5px">Bipe os boletos (o código de barras do boleto) ou digite a linha digitável no campo acima. Valor, vencimento e banco são lidos do código.</div>
         </div>
         <div class="situacoes" role="radiogroup" aria-label="Situação da mercadoria">
           <button type="button" data-s="OK" class="sel" role="radio" aria-keyshortcuts="Alt+1">Chegou OK<small>tudo conferido<span class="atalho">Alt+1</span></small></button>
@@ -411,7 +442,7 @@
       <div class="card">
         <h2>Últimos registros da loja</h2>
         <div class="tabela"><table class="resp">
-          <thead><tr><th>Quando</th><th>Nota</th><th>Fornecedor</th><th>Situação</th><th>Conferência</th><th>Analista</th></tr></thead>
+          <thead><tr><th>Quando</th><th>Nota</th><th>Fornecedor</th><th>Boletos</th><th>Situação</th><th>Conferência</th><th>Analista</th></tr></thead>
           <tbody id="tbUltimas"></tbody>
         </table></div>
       </div>
@@ -431,7 +462,7 @@
         </div>
         <div class="muted" id="totalNotas" style="font-size:13px"></div>
         <div class="tabela"><table class="resp">
-          <thead><tr><th>Recebida</th><th>Loja</th><th>Nota</th><th data-largo>Chave</th><th>Situação</th><th>Conferência</th><th>Lançamento</th></tr></thead>
+          <thead><tr><th>Recebida</th><th>Loja</th><th>Nota</th><th>Boletos</th><th data-largo>Chave</th><th>Situação</th><th>Conferência</th><th>Lançamento</th></tr></thead>
           <tbody id="tbNotas"></tbody>
         </table></div>
       </div>
@@ -640,6 +671,16 @@
   </div>
 </div>
 
+<div id="modalNota" class="fundoModal" hidden role="dialog" aria-modal="true" aria-labelledby="tituloNota">
+  <div class="card detalhes">
+    <div class="detTopo">
+      <div><h2 id="tituloNota">Nota fiscal</h2><div class="muted" id="subNota" style="font-size:13px"></div></div>
+      <button type="button" class="fechar copiar" id="fecharNota" aria-label="Fechar">✕</button>
+    </div>
+    <div id="detConteudo"></div>
+  </div>
+</div>
+
 <div id="toast" class="toast" hidden></div>
 
 <script>
@@ -655,7 +696,7 @@ const guardar = {
   set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} },
 };
 
-let estado = { token: guardar.get('nfe_token'), ctx: null, situacao: 'OK' };
+let estado = { token: guardar.get('nfe_token'), ctx: null, situacao: 'OK', notaPend: '', boletosPend: [], ultimaNota: null, detId: null };
 
 // Dentro do Google (Apps Script) existe google.script.run; no app instalável, a tela fala com o servidor por fetch.
 const MODO_SITE = !(window.google && google.script && google.script.run);
@@ -727,6 +768,62 @@ function analisarChave(entrada) {
     serie: String(Number(c.slice(22, 25))), numero: String(Number(c.slice(25, 34))) };
 }
 
+/* Boleto: mesma leitura do servidor. Código de barras (44) ou linha digitável (47 bancário / 48 convênio). */
+const BANCOS = { '001': 'Banco do Brasil', '004': 'Banco do Nordeste', '033': 'Santander', '041': 'Banrisul', '070': 'BRB',
+  '077': 'Inter', '085': 'Ailos', '097': 'Credisis', '104': 'Caixa', '133': 'Cresol', '136': 'Unicred', '197': 'Stone',
+  '208': 'BTG Pactual', '237': 'Bradesco', '260': 'Nubank', '290': 'PagBank', '323': 'Mercado Pago', '336': 'C6 Bank',
+  '341': 'Itaú', '380': 'PicPay', '389': 'Mercantil', '403': 'Cora', '422': 'Safra', '633': 'Rendimento', '655': 'Votorantim',
+  '748': 'Sicredi', '756': 'Sicoob' };
+function mod10(num) {
+  let soma = 0, peso = 2;
+  for (let i = num.length - 1; i >= 0; i--) { let p = Number(num[i]) * peso; if (p > 9) p = Math.floor(p / 10) + (p % 10); soma += p; peso = peso === 2 ? 1 : 2; }
+  return (10 - (soma % 10)) % 10;
+}
+function mod11Boleto(n) {
+  let soma = 0, peso = 2;
+  for (let i = n.length - 1; i >= 0; i--) { soma += Number(n[i]) * peso; peso = peso === 9 ? 2 : peso + 1; }
+  const dv = 11 - (soma % 11); return (dv === 0 || dv === 10 || dv === 11) ? 1 : dv;
+}
+function mod11Arrec(n) {
+  let soma = 0, peso = 2;
+  for (let i = n.length - 1; i >= 0; i--) { soma += Number(n[i]) * peso; peso = peso === 9 ? 2 : peso + 1; }
+  const r = soma % 11; return (r === 0 || r === 1) ? 0 : (r === 10 ? 1 : 11 - r);
+}
+function vencimentoPorFator(fator) {
+  const f = Number(fator); if (!f) return '';
+  const dia = 86400000, antigo = Date.UTC(1997, 9, 7) + f * dia, novo = Date.UTC(2025, 1, 22) + (f - 1000) * dia;
+  return new Date(Math.abs(novo - Date.now()) < Math.abs(antigo - Date.now()) ? novo : antigo).toISOString().slice(0, 10);
+}
+function analisarBoleto(entrada) {
+  let d = digitos(entrada);
+  if (d.length === 47) {
+    if ([[0, 9], [10, 20], [21, 31]].some(([i, f]) => mod10(d.slice(i, f)) !== Number(d[f]))) return { ok: false, erro: 'Linha digitável com erro de digitação. Confira os números.' };
+    d = d.slice(0, 4) + d[32] + d.slice(33, 47) + d.slice(4, 9) + d.slice(10, 20) + d.slice(21, 31);
+  } else if (d.length === 48 && d[0] === '8') {
+    d = [0, 12, 24, 36].map(i => d.slice(i, i + 11)).join('');
+  }
+  if (d.length !== 44) return null;
+  if (d[0] === '8') {
+    const usa10 = d[2] === '6' || d[2] === '7', semDv = d.slice(0, 3) + d.slice(4);
+    if ((usa10 ? mod10(semDv) : mod11Arrec(semDv)) !== Number(d[3])) return null;
+    return { ok: true, barras: d, banco: 'Convênio', valor: (d[2] === '6' || d[2] === '8') ? Number(d.slice(4, 15)) / 100 : 0, vencimento: '' };
+  }
+  if (d[3] !== '9' || mod11Boleto(d.slice(0, 4) + d.slice(5)) !== Number(d[4])) return null;
+  const b = d.slice(0, 3);
+  return { ok: true, barras: d, banco: BANCOS[b] ? BANCOS[b] + ' (' + b + ')' : 'Banco ' + b, valor: Number(d.slice(9, 19)) / 100, vencimento: vencimentoPorFator(d.slice(5, 9)) };
+}
+/** O que foi lido: nota fiscal, boleto, boleto com erro de digitação, ou nada reconhecível (null). */
+function classificarCodigo(entrada) {
+  const d = digitos(entrada);
+  if (d.length === 44) { const n = analisarChave(d); if (n.ok) return { tipo: 'nfe', info: n }; }
+  const b = analisarBoleto(d);
+  if (b && b.ok) return { tipo: 'boleto', info: b };
+  if (b) return { tipo: 'erro', erro: b.erro };
+  return null;
+}
+const dinheiro = v => (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const diaBr = s => { const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] + '/' + m[1] : ''; };
+
 const SIT = { OK: ['Chegou OK', 'ok'], DIVERGENCIA: ['Divergência', 'warn'], RECUSADA: ['Recusada', 'bad'] };
 const VAL = { CONFERIDA: ['Loja certa', 'ok'], AGUARDANDO: ['Aguardando Sysmo', 'neutro'], DESTINO_ERRADO: ['Loja errada', 'bad'] };
 const chip = (mapa, k) => { const v = mapa[k] || [k, 'neutro']; return '<span class="chip ' + v[1] + '">' + esc(v[0]) + '</span>'; };
@@ -739,7 +836,7 @@ const Leitor = (() => {
   function zx() {
     if (leitorZx || !window.ZXing) return leitorZx;
     const dicas = new Map();
-    dicas.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.CODE_128]);
+    dicas.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.ITF]);
     dicas.set(ZXing.DecodeHintType.TRY_HARDER, true);
     leitorZx = new ZXing.MultiFormatReader();
     leitorZx.setHints(dicas);
@@ -752,13 +849,15 @@ const Leitor = (() => {
     try {
       if ('BarcodeDetector' in window) {
         const formatos = await BarcodeDetector.getSupportedFormats();
-        if (formatos.indexOf('code_128') >= 0) detector = new BarcodeDetector({ formats: ['code_128'] });
+        const usar = ['code_128', 'itf'].filter(f => formatos.indexOf(f) >= 0);
+        if (usar.length) detector = new BarcodeDetector({ formats: usar });
       }
     } catch (e) {}
     return detector || null;
   }
 
-  const chaveValida = t => { const d = digitos(t); return d.length === 44 && analisarChave(d).ok ? d : null; };
+  // Aceita a chave da NF-e (Code 128) e o código de barras do boleto (ITF).
+  const chaveValida = t => { const c = classificarCodigo(t); return c && (c.tipo === 'nfe' || c.tipo === 'boleto') ? digitos(t) : null; };
 
   /** Tenta ler uma chave de NF-e de um canvas. Devolve os 44 dígitos ou null. */
   async function lerCanvas(cv) {
@@ -863,12 +962,7 @@ function carregarZXing() {
   return zxingPromessa;
 }
 
-function chaveLida(chave) {
-  try { navigator.vibrate && navigator.vibrate(80); } catch (e) {}
-  $('chave').value = chave;
-  $('chave').dispatchEvent(new Event('input'));
-  if (!$('autoOk').checked || estado.situacao !== 'OK') aviso($('msgBip'), 'Código lido. Confira a situação e toque em Registrar recebimento.', 'info');
-}
+function chaveLida(codigo) { processarCodigo(codigo); }
 
 function medirTopo() {
   const t = document.querySelector('header.topo');
@@ -888,17 +982,18 @@ function camEstado(txt, lido) {
   if (lido) camVerde = setTimeout(() => { if (!camPausada()) $('camPainel').classList.remove('lido'); }, 1500);
 }
 
-// Não lê enquanto há uma nota lida esperando ser registrada.
-const camPausada = () => registrando || digitos($('chave').value).length === 44 || !$('modalAval').hidden;
+// Não lê enquanto registra ou com uma janela aberta. Com uma nota esperando, continua lendo os boletos.
+const camPausada = () => registrando || !$('modalAval').hidden || !$('modalNota').hidden;
 
 function camIgnorar(chave) { if (chave) cam.ignorar[chave] = Date.now() + 10000; }
 
-function camLeu(chave) {
-  if ((cam.ignorar[chave] || 0) > Date.now()) return; // o mesmo papel continua na frente da câmera
-  camIgnorar(chave);
-  bip(true);
-  camEstado('Nota lida ✓', true);
-  chaveLida(chave);
+function camLeu(codigo) {
+  if ((cam.ignorar[codigo] || 0) > Date.now()) return; // o mesmo papel continua na frente da câmera
+  camIgnorar(codigo);
+  const c = classificarCodigo(codigo);
+  if (c && c.tipo === 'nfe' && estado.notaPend === c.info.chave) return;
+  if (c && c.tipo === 'nfe') camEstado('Nota lida ✓', true);
+  processarCodigo(codigo);
 }
 
 async function abrirCamera() {
@@ -955,7 +1050,7 @@ $('fotoCodigo').addEventListener('change', async () => {
   if (!window.ZXing && !('BarcodeDetector' in window)) { aviso($('msgBip'), 'Não consegui carregar o leitor. Confira a internet do celular e tente de novo.', 'bad'); return; }
   try {
     const c = await Leitor.lerFoto(arq);
-    if (c) { bip(true); aviso($('msgBip'), ''); chaveLida(c); }
+    if (c) { aviso($('msgBip'), ''); processarCodigo(c); }
     else { bip(false); aviso($('msgBip'), 'Não consegui ler o código nesta foto. Chegue mais perto (o código deve ocupar quase toda a largura), com boa luz e sem tremer, e tente de novo.', 'bad'); }
   } catch (err) { aviso($('msgBip'), err.message, 'bad'); }
 });
@@ -1075,8 +1170,7 @@ function escolherSituacao(s) {
 document.querySelectorAll('.situacoes button').forEach(b => b.addEventListener('click', () => { escolherSituacao(b.dataset.s); if (b.dataset.s !== 'OK') $('obs').focus(); else focarChave(); }));
 
 function atualizarPrevia() {
-  const c = digitos($('chave').value);
-  const info = c.length === 44 ? analisarChave(c) : null;
+  const info = estado.notaPend ? analisarChave(estado.notaPend) : null;
   $('previa').hidden = !(info && info.ok);
   if (info && info.ok) {
     $('pvChave').textContent = fmtChave(info.chave);
@@ -1084,17 +1178,123 @@ function atualizarPrevia() {
     $('pvNum').textContent = info.numero + ' / ' + info.serie;
     $('pvEmi').textContent = info.emissao;
   }
+  desenharBoletos();
   return info;
 }
 
+/** Trata um código lido pela câmera, pela foto, pelo leitor USB ou digitado: nota fiscal ou boleto. */
+function processarCodigo(entrada) {
+  const c = classificarCodigo(entrada);
+  if (!c) return false;
+  if (c.tipo === 'erro') { aviso($('msgBip'), c.erro, 'bad'); bip(false); return true; }
+  try { navigator.vibrate && navigator.vibrate(80); } catch (e) {}
+  if (c.tipo === 'boleto') { adicionarBoletoLido(c.info); return true; }
+  const chave = c.info.chave;
+  if (estado.notaPend && estado.notaPend !== chave) {
+    aviso($('msgBip'), 'Registre a nota nº ' + analisarChave(estado.notaPend).numero + ' antes de bipar outra (ou toque em Descartar).', 'warn');
+    bip(false);
+    return true;
+  }
+  estado.notaPend = chave;
+  atualizarPrevia();
+  if ($('autoOk').checked && estado.situacao === 'OK') { registrar(); return true; }
+  bip(true);
+  aviso($('msgBip'), 'Nota lida. Bipe agora os boletos dela (se houver), confira a situação e toque em Registrar recebimento.', 'info');
+  return true;
+}
+
+function descartarNota() {
+  estado.notaPend = ''; estado.boletosPend = [];
+  $('chave').value = ''; $('obs').value = '';
+  atualizarPrevia(); escolherSituacao('OK'); aviso($('msgBip'), ''); focarChave();
+}
+
+const ultimaNotaAtiva = () => (estado.ultimaNota && Date.now() - estado.ultimaNota.quando < 30 * 60000) ? estado.ultimaNota : null;
+const textoBoleto = b => dinheiro(b.valor) + (b.vencimento ? ' · vence ' + diaBr(b.vencimento) : ' · sem vencimento no código');
+
+/** O servidor (Code.gs no Google) já tem a versão pedida? A tela do GitHub pode chegar antes dele. */
+function servidorNaVersao(min) {
+  const v = String((estado.ctx && estado.ctx.versao && estado.ctx.versao.numero) || '0').split('.').map(Number);
+  const m = min.split('.').map(Number);
+  for (let i = 0; i < 3; i++) if ((v[i] || 0) !== (m[i] || 0)) return (v[i] || 0) > (m[i] || 0);
+  return true;
+}
+const AVISO_SERVIDOR_BOLETOS = 'Os boletos ainda não estão ligados no servidor: o administrador precisa publicar o Code.gs 1.9.0 no Google (Gerenciar implantações → Nova versão).';
+
+async function adicionarBoletoLido(b) {
+  if (!servidorNaVersao('1.9.0')) { bip(false); aviso($('msgBip'), AVISO_SERVIDOR_BOLETOS, 'warn'); return; }
+  if (estado.notaPend) {
+    if (estado.boletosPend.some(x => x.barras === b.barras)) { bip(false); aviso($('msgBip'), 'Este boleto já foi bipado para esta nota.', 'warn'); return; }
+    estado.boletosPend.push(b);
+    estado.boletosPend.sort((x, y) => (x.vencimento || '9').localeCompare(y.vencimento || '9'));
+    bip(true); desenharBoletos();
+    aviso($('msgBip'), 'Boleto lido: ' + textoBoleto(b) + '. Bipe o próximo ou registre a nota.', 'ok');
+    if (Leitor.ligado()) camEstado('Boleto lido ✓  ' + dinheiro(b.valor), true);
+    return;
+  }
+  const u = ultimaNotaAtiva();
+  if (!u) { bip(false); aviso($('msgBip'), 'Bipe primeiro a nota fiscal e, logo depois, os boletos dela.', 'warn'); return; }
+  try {
+    u.boletos = await api('adicionarBoleto', estado.token, u.id, b.barras);
+    u.quando = Date.now();
+    bip(true); desenharBoletos(); carregarUltimas();
+    aviso($('msgBip'), 'Boleto adicionado à nota nº ' + u.numero + ': ' + textoBoleto(b) + '.', 'ok');
+    if (Leitor.ligado()) camEstado('Boleto lido ✓  ' + dinheiro(b.valor), true);
+  } catch (err) { bip(false); aviso($('msgBip'), err.message, 'bad'); }
+}
+
+function desenharBoletos() {
+  const pend = !!estado.notaPend;
+  const u = pend ? null : ultimaNotaAtiva();
+  if (!pend && !u) { $('boxBoletos').hidden = true; return; }
+  const lista = pend ? estado.boletosPend.map((b, i, a) => Object.assign({ parcela: (i + 1) + '/' + a.length }, b)) : (u.boletos || []);
+  const numero = pend ? analisarChave(estado.notaPend).numero : u.numero;
+  const total = lista.reduce((s, b) => s + (Number(b.valor) || 0), 0);
+  $('boxBoletos').hidden = false;
+  $('boletosTitulo').textContent = 'Boletos da nota nº ' + numero + (pend ? '' : ' (já registrada)');
+  $('boletosResumo').textContent = lista.length ? lista.length + (lista.length === 1 ? ' boleto · ' : ' boletos · ') + dinheiro(total) : '';
+  $('listaBoletos').innerHTML = lista.length ? lista.map((b, i) =>
+    '<div class="boleto"><span class="mono">' + esc(b.parcela) + '</span><span>' + (b.vencimento ? 'vence ' + diaBr(b.vencimento) : 'sem vencimento') + '</span>' +
+    '<b>' + dinheiro(b.valor) + '</b><span class="muted">' + esc(b.banco) + '</span>' +
+    '<button type="button" class="copiar" aria-label="Remover boleto" data-rem-boleto="' + (pend ? 'p' + i : esc(b.id)) + '">✕</button></div>').join('')
+    : '<div class="muted" style="font-size:13px">Nenhum boleto ainda.</div>';
+}
+
+$('listaBoletos').addEventListener('click', e => {
+  const bt = e.target.closest('[data-rem-boleto]');
+  if (!bt) return;
+  const ref = bt.dataset.remBoleto;
+  if (ref[0] === 'p') { estado.boletosPend.splice(Number(ref.slice(1)), 1); desenharBoletos(); focarChave(); return; }
+  const u = ultimaNotaAtiva();
+  if (!u) return;
+  ocupado(bt, async () => {
+    try { u.boletos = await api('removerBoleto', estado.token, ref); desenharBoletos(); carregarUltimas(); toast('Boleto removido'); }
+    catch (err) { toast(err.message); }
+  });
+});
+$('btDescartar').addEventListener('click', descartarNota);
+
 $('chave').addEventListener('input', () => {
-  aviso($('msgBip'), '');
-  const info = atualizarPrevia();
-  if (info && !info.ok) { aviso($('msgBip'), info.erro, 'bad'); bip(false); }
-  if (info && info.ok && $('autoOk').checked && estado.situacao === 'OK') registrar();
+  const d = digitos($('chave').value);
+  if (d.length === 44 || d.length === 47 || d.length === 48) {
+    const c = classificarCodigo(d);
+    if (c && c.tipo !== 'erro') { $('chave').value = ''; aviso($('msgBip'), ''); processarCodigo(d); return; }
+    if (c && c.tipo === 'erro') { aviso($('msgBip'), c.erro, 'bad'); bip(false); return; }
+    // 44 números que não são nota nem boleto: pode ser o começo de uma linha digitável.
+    aviso($('msgBip'), d.length === 44 ? 'Código não reconhecido. Se for a linha digitável de um boleto, continue digitando.' : 'Código não reconhecido. Confira os números.', d.length === 44 ? 'info' : 'bad');
+    if (d.length !== 44) bip(false);
+  }
 });
 $('chave').addEventListener('keydown', e => {
-  if (e.key === 'Enter') { e.preventDefault(); if (!$('autoOk').checked || estado.situacao !== 'OK') registrar(); }
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const d = digitos($('chave').value);
+  if (d) {
+    aviso($('msgBip'), 'Código não reconhecido: a chave da nota e o código de barras do boleto têm 44 números; a linha digitável do boleto tem 47 (ou 48 em contas de consumo).', 'bad');
+    bip(false);
+    return;
+  }
+  if (estado.notaPend && (!$('autoOk').checked || estado.situacao !== 'OK')) registrar();
 });
 $('autoOk').addEventListener('change', () => { guardar.set('nfe_auto_ok', $('autoOk').checked ? '1' : null); focarChave(); });
 $('btRegistrar').addEventListener('click', registrar);
@@ -1102,34 +1302,40 @@ $('btRegistrar').addEventListener('click', registrar);
 let registrando = false;
 async function registrar() {
   if (registrando) return;
-  const info = analisarChave($('chave').value);
-  if (!info.ok) { aviso($('msgBip'), info.erro, 'bad'); bip(false); focarChave(); return; }
+  const info = analisarChave(estado.notaPend || $('chave').value);
+  if (!info.ok) { aviso($('msgBip'), estado.notaPend || digitos($('chave').value) ? info.erro : 'Bipe a nota fiscal primeiro.', 'bad'); bip(false); focarChave(); return; }
   registrando = true; $('btRegistrar').disabled = true;
   aviso($('msgBip'), 'Registrando…', 'info');
+  const boletos = estado.boletosPend.map(b => b.barras);
   try {
     const t0 = performance.now();
-    const eraUrgente = $('urgente').checked;
-    const r = await api('registrarNota', estado.token, { chave: info.chave, situacao: estado.situacao, tipo: $('tipoDiv').value, observacao: $('obs').value, urgente: eraUrgente });
+    const r = await api('registrarNota', estado.token, { chave: info.chave, situacao: estado.situacao, tipo: $('tipoDiv').value, observacao: $('obs').value, urgente: $('urgente').checked, boletos });
     const ms = performance.now() - t0;
     bip(true);
     aviso($('msgBip'), 'Registrada: nota ' + r.numero + ' do fornecedor ' + r.cnpjEmitente + ' — ' + SIT[r.situacao][0] +
-      (r.urgente ? ' — marcada como URGENTE, a analista foi avisada.' : '') +
-      (r.validacao === 'AGUARDANDO' ? ' A loja de destino será conferida quando a nota chegar na Sysmo.' : ''), r.urgente ? 'warn' : (r.situacao === 'OK' ? 'ok' : 'warn'));
+      (boletos.length ? ', com ' + boletos.length + (boletos.length === 1 ? ' boleto' : ' boletos') : '') +
+      (r.urgente ? ' — marcada como URGENTE, a analista foi avisada.' : '.') +
+      (r.validacao === 'AGUARDANDO' ? ' A loja de destino será conferida quando a nota chegar na Sysmo.' : '') +
+      (boletos.length ? '' : ' Se houver boletos, bipe agora.'), r.urgente ? 'warn' : (r.situacao === 'OK' ? 'ok' : 'warn'));
     $('urgente').checked = false; // a urgência vale só para a nota que acabou de ser bipada
     camIgnorar(info.chave);
-    $('chave').value = ''; $('obs').value = ''; $('previa').hidden = true;
+    estado.ultimaNota = { id: r.id, numero: r.numero, boletos: r.boletosLista || [], quando: Date.now() };
+    estado.notaPend = ''; estado.boletosPend = [];
+    $('chave').value = ''; $('obs').value = '';
     escolherSituacao('OK');
-    if (Leitor.ligado()) camEstado('Registrada ✓  Aponte para a próxima nota', true);
+    atualizarPrevia();
+    if (Leitor.ligado()) camEstado('Registrada ✓  Bipe os boletos ou a próxima nota', true);
     carregarUltimas();
     contarParaAvaliacao(ms);
   } catch (err) {
     bip(false);
     aviso($('msgBip'), err.message, 'bad');
-    if (Leitor.ligado()) {
+    // Nota que nunca vai entrar (repetida ou de outra loja): libera para a próxima.
+    if (/já foi registrada|OUTRA LOJA|Chave inválida/.test(err.message)) {
       camIgnorar(info.chave);
-      $('chave').value = ''; $('previa').hidden = true;
-      camEstado('Não registrada (veja o aviso). Aponte para a próxima');
-    } else if (!toque) $('chave').select();
+      estado.notaPend = ''; estado.boletosPend = []; atualizarPrevia();
+      if (Leitor.ligado()) camEstado('Não registrada (veja o aviso). Aponte para a próxima');
+    }
   } finally {
     registrando = false; $('btRegistrar').disabled = false; focarChave();
   }
@@ -1140,14 +1346,15 @@ async function carregarUltimas() {
   try {
     const itens = await api('ultimasDaLoja', estado.token);
     tb.innerHTML = itens.length ? itens.map(r =>
-      '<tr><td>' + esc(r.registradoEm) + '<span class="sub">' + esc(r.usuario) + '</span></td>' +
+      '<tr data-id="' + esc(r.id) + '"><td>' + esc(r.registradoEm) + '<span class="sub">' + esc(r.usuario) + '</span></td>' +
       '<td class="mono">' + esc(r.numero) + '<span class="sub">série ' + esc(r.serie) + '</span></td>' +
       '<td class="mono">' + esc(r.cnpjEmitente) + '</td>' +
+      '<td>' + resumoBoletosCel(r.boletos) + '</td>' +
       '<td>' + chip(SIT, r.situacao) + (r.tipo ? '<span class="sub">' + esc(r.tipo) + '</span>' : '') + '</td>' +
       '<td>' + chip(VAL, r.validacao) + '</td>' +
       '<td>' + (r.lancamento === 'LANCADA' ? '<span class="chip info">Lançada</span>' : '<span class="chip neutro">A lançar</span>') + '</td></tr>'
-    ).join('') : '<tr><td colspan="6" class="vazio">Nenhuma nota registrada ainda. Bipe a primeira acima.</td></tr>';
-  } catch (err) { tb.innerHTML = '<tr><td colspan="6" class="vazio">' + esc(err.message) + '</td></tr>'; }
+    ).join('') : '<tr><td colspan="7" class="vazio">Nenhuma nota registrada ainda. Bipe a primeira acima.</td></tr>';
+  } catch (err) { tb.innerHTML = '<tr><td colspan="7" class="vazio">' + esc(err.message) + '</td></tr>'; }
 }
 
 /* ───────── Analista ───────── */
@@ -1157,7 +1364,7 @@ $('fBusca').addEventListener('input', () => { clearTimeout(buscaTimer); buscaTim
 
 async function carregarNotas() {
   const tb = $('tbNotas');
-  tb.innerHTML = '<tr><td colspan="7" class="vazio">Carregando…</td></tr>';
+  tb.innerHTML = '<tr><td colspan="8" class="vazio">Carregando…</td></tr>';
   try {
     const r = await api('listarNotas', estado.token, { loja_id: $('fLoja').value, lancamento: $('fLanc').value, situacao: $('fSit').value, validacao: $('fVal').value, dias: $('fDias').value, busca: $('fBusca').value });
     const s = r.resumo;
@@ -1175,21 +1382,24 @@ async function carregarNotas() {
     }));
     $('totalNotas').textContent = r.total + (r.total === 1 ? ' nota' : ' notas') + (r.total > r.itens.length ? ' (mostrando as ' + r.itens.length + ' mais recentes)' : '');
     tb.innerHTML = r.itens.length ? r.itens.map(n =>
-      '<tr' + (n.urgente && n.lancamento !== 'LANCADA' ? ' class="linhaUrgente"' : '') + '><td>' + esc(n.registradoEm) + '<span class="sub">' + esc(n.usuario) + '</span>' +
+      '<tr data-id="' + esc(n.id) + '"' + (n.urgente && n.lancamento !== 'LANCADA' ? ' class="linhaUrgente"' : '') + '><td>' + esc(n.registradoEm) + '<span class="sub">' + esc(n.usuario) + '</span>' +
         (n.urgente && n.lancamento !== 'LANCADA' ? '<span class="chip urgente">URGENTE</span>' : '') + '</td>' +
       '<td>' + esc(n.loja) + '</td>' +
-      '<td class="mono">' + esc(n.numero) + '/' + esc(n.serie) + '<span class="sub">' + esc(n.cnpjEmitente) + '</span></td>' +
+      '<td class="mono">' + esc(n.numero) + '/' + esc(n.serie) + '<span class="sub">' + esc(n.cnpjEmitente) + '</span><button class="link" data-detalhes="' + esc(n.id) + '" style="font-size:12px">ver detalhes</button></td>' +
+      '<td>' + resumoBoletosCel(n.boletos) + '</td>' +
       '<td><div class="chaveCel">' + esc(n.chave) + '</div><button class="copiar" data-copiar="' + esc(n.chave) + '">Copiar</button></td>' +
       '<td>' + chip(SIT, n.situacao) + (n.tipo ? '<span class="sub">' + esc(n.tipo) + '</span>' : '') + (n.observacao ? '<span class="sub">“' + esc(n.observacao) + '”</span>' : '') + '</td>' +
       '<td>' + chip(VAL, n.validacao) + (n.validacao === 'DESTINO_ERRADO' ? '<span class="sub">nota é do CNPJ ' + esc(n.cnpjDestinatario) + '</span>' : '') + '</td>' +
       '<td>' + (n.lancamento === 'LANCADA'
         ? '<span class="chip info">Lançada</span><span class="sub">' + esc(n.lancadoPor) + ' · ' + esc(n.lancadoEm) + '</span><button class="link" data-lanc="' + esc(n.id) + '" data-v="0" style="font-size:12px">desfazer</button>'
         : '<button class="primario copiar" data-lanc="' + esc(n.id) + '" data-v="1">Marcar lançada</button>') + '</td></tr>'
-    ).join('') : '<tr><td colspan="7" class="vazio">Nenhuma nota com esses filtros.</td></tr>';
-  } catch (err) { tb.innerHTML = '<tr><td colspan="7" class="vazio">' + esc(err.message) + '</td></tr>'; }
+    ).join('') : '<tr><td colspan="8" class="vazio">Nenhuma nota com esses filtros.</td></tr>';
+  } catch (err) { tb.innerHTML = '<tr><td colspan="8" class="vazio">' + esc(err.message) + '</td></tr>'; }
 }
 
 document.addEventListener('click', e => {
+  const det = e.target.closest('[data-detalhes]');
+  if (det) { abrirDetalhes(det.dataset.detalhes); return; }
   const c = e.target.closest('[data-copiar]');
   if (c) {
     const t = c.dataset.copiar;
@@ -1400,10 +1610,159 @@ $('formSenha').addEventListener('submit', e => {
   });
 });
 
+/* ───────── Detalhes da nota (analista e loja) ───────── */
+function baixarArquivo(nome, conteudo, tipo, emBase64) {
+  let blob;
+  if (emBase64) {
+    const bin = atob(conteudo), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    blob = new Blob([bytes], { type: tipo });
+  } else blob = new Blob([conteudo], { type: tipo });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nome; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+const PORTAL_NFE = 'https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConsulta=resumo&tipoConteudo=7PhJ+gAVw2g=';
+
+async function abrirDetalhes(id) {
+  if (!servidorNaVersao('1.9.0')) { toast('Detalhes da nota: o administrador precisa publicar o Code.gs 1.9.0 no Google.'); return; }
+  estado.detId = id;
+  $('detConteudo').innerHTML = '<div class="vazio">Carregando…</div>';
+  $('tituloNota').textContent = 'Nota fiscal';
+  $('subNota').textContent = '';
+  $('modalNota').hidden = false;
+  try { desenharDetalhes(await api('detalhesNota', estado.token, id)); }
+  catch (err) { $('detConteudo').innerHTML = '<div class="aviso bad">' + esc(err.message) + '</div>'; }
+}
+function fecharDetalhes() { $('modalNota').hidden = true; estado.detId = null; focarChave(); }
+
+function desenharDetalhes(d) {
+  const n = d.nota, x = d.xml, bol = d.boletos || [];
+  const analista = estado.ctx.usuario.perfil !== 'LOJA';
+  $('tituloNota').textContent = 'Nota nº ' + n.numero + ' · série ' + n.serie;
+  $('subNota').textContent = (x && x.emitente ? x.emitente + ' · ' : '') + 'CNPJ ' + n.cnpjEmitente;
+  const campo = (rot, val) => '<div><span>' + rot + '</span>' + val + '</div>';
+  const totalBol = bol.reduce((s, b) => s + b.valor, 0);
+  let comparacao = '';
+  if (x && x.duplicatas.length) {
+    const totalXml = x.duplicatas.reduce((s, p) => s + p.valor, 0);
+    const confere = bol.length === x.duplicatas.length && Math.abs(totalBol - totalXml) < 0.01;
+    comparacao = '<div class="aviso ' + (confere ? 'ok' : 'warn') + '">' + (confere
+      ? 'Os boletos bipados conferem com as ' + x.duplicatas.length + ' parcelas declaradas no XML (' + dinheiro(totalXml) + ').'
+      : 'Atenção: o XML declara ' + x.duplicatas.length + (x.duplicatas.length === 1 ? ' parcela' : ' parcelas') + ' (' + dinheiro(totalXml) + '), e foram bipados ' + bol.length + (bol.length === 1 ? ' boleto' : ' boletos') + ' (' + dinheiro(totalBol) + ').') + '</div>';
+  }
+  $('detConteudo').innerHTML =
+    '<div class="detChips">' + chip(SIT, n.situacao) + chip(VAL, n.validacao) +
+      (n.lancamento === 'LANCADA' ? '<span class="chip info">Lançada</span>' : '<span class="chip neutro">A lançar</span>') +
+      (n.urgente && n.lancamento !== 'LANCADA' ? '<span class="chip urgente">URGENTE</span>' : '') + '</div>' +
+    '<div class="detDados">' +
+      campo('Chave de acesso', '<span class="mono chaveDet">' + esc(fmtChave(n.chave)) + '</span> <button class="copiar" data-copiar="' + esc(n.chave) + '">Copiar</button>') +
+      campo('Fornecedor', esc((x && x.emitente) || '') + '<span class="sub mono">' + esc(n.cnpjEmitente) + '</span>') +
+      campo('Emissão', esc(x && x.emissao ? diaBr(x.emissao) : n.emissao)) +
+      campo('Loja', esc(n.loja)) +
+      campo('Recebida', esc(n.registradoEm) + '<span class="sub">por ' + esc(n.usuario) + '</span>') +
+      (n.tipo || n.observacao ? campo('Divergência', esc(n.tipo || '') + (n.observacao ? '<span class="sub">“' + esc(n.observacao) + '”</span>' : '')) : '') +
+      (x ? campo('Valor da nota', '<b>' + dinheiro(x.valorTotal) + '</b><span class="sub">' + x.itens + (x.itens === 1 ? ' item' : ' itens') + '</span>') : '') +
+      (n.lancamento === 'LANCADA' ? campo('Lançada', esc(n.lancadoEm) + '<span class="sub">por ' + esc(n.lancadoPor) + '</span>') : '') +
+    '</div>' +
+
+    '<h3>Boletos ' + (bol.length ? '(' + bol.length + ' · ' + dinheiro(totalBol) + ')' : '') + '</h3>' +
+    (bol.length ? '<div class="tabela"><table class="resp"><thead><tr><th>Parcela</th><th>Vencimento</th><th>Valor</th><th>Banco</th><th data-largo>Linha digitável</th><th></th></tr></thead><tbody>' +
+      bol.map(b => '<tr><td class="mono">' + esc(b.parcela) + '</td><td>' + (b.vencimento ? diaBr(b.vencimento) : '—') + '</td><td class="mono"><b>' + dinheiro(b.valor) + '</b></td><td>' + esc(b.banco) + '</td>' +
+        '<td><span class="mono linhaDig">' + esc(b.linha) + '</span> <button class="copiar" data-copiar="' + esc(b.linha.replace(/\D/g, '')) + '">Copiar</button></td>' +
+        '<td><button class="link" data-det-rem="' + esc(b.id) + '" style="font-size:12px">remover</button></td></tr>').join('') +
+      '</tbody></table></div>' : '<div class="muted" style="font-size:13px">Nenhum boleto registrado para esta nota.</div>') +
+    comparacao +
+    '<div class="linhaApp"><input id="detBoleto" inputmode="numeric" autocomplete="off" placeholder="Bipe o boleto ou digite a linha digitável" aria-label="Adicionar boleto">' +
+      '<button type="button" class="primario copiar" data-det-acao="boleto">Adicionar</button></div>' +
+
+    '<h3>XML e PDF da nota</h3>' +
+    (x
+      ? (x.duplicatas.length ? '<div class="muted" style="font-size:13px">Parcelas no XML: ' + x.duplicatas.map(p => esc(p.numero || '') + ' · ' + diaBr(p.vencimento) + ' · ' + dinheiro(p.valor)).join(' &nbsp;|&nbsp; ') + '</div>' : '') +
+        '<div class="detAcoes"><button type="button" data-det-acao="xml">Baixar XML</button><button type="button" data-det-acao="pdf">Baixar espelho em PDF</button></div>' +
+        '<div class="muted" style="font-size:12px">O espelho em PDF é montado a partir do XML, para conferência. Ele não substitui o DANFE oficial.</div>'
+      : '<div class="muted" style="font-size:13px">O XML desta nota ainda não está no app. Ele chega sozinho pela pasta da Sysmo (Lojas e Sysmo), ou ' + (d.podeAnexarXml ? 'você pode anexar o arquivo aqui.' : 'a analista pode anexá-lo.') + '</div>' +
+        '<div class="detAcoes">' + (d.podeAnexarXml ? '<label class="botaoArquivo">Anexar XML<input type="file" id="detXml" accept=".xml,text/xml,application/xml" hidden></label>' : '') +
+        '<a class="botaoLink" href="' + PORTAL_NFE + '" target="_blank" rel="noopener">Consultar no Portal da NF-e</a></div>') +
+
+    (analista ? '<div class="detAcoes" style="margin-top:6px">' + (n.lancamento === 'LANCADA'
+      ? '<button type="button" data-det-acao="desfazer">Voltar para “a lançar”</button>'
+      : '<button type="button" class="primario" data-det-acao="lancar">Marcar lançada</button>') + '</div>' : '') +
+    '<div id="msgDet" class="aviso" hidden></div>';
+}
+
+async function acaoDetalhe(acao, botao) {
+  const id = estado.detId;
+  const msg = t => aviso($('msgDet'), t, 'bad');
+  await ocupado(botao, async () => {
+    try {
+      if (acao === 'boleto') {
+        const c = classificarCodigo($('detBoleto').value);
+        if (!c || c.tipo === 'nfe') { msg('Código de boleto não reconhecido. Confira os números.'); return; }
+        if (c.tipo === 'erro') { msg(c.erro); return; }
+        await api('adicionarBoleto', estado.token, id, c.info.barras);
+        toast('Boleto adicionado');
+      } else if (acao === 'xml') {
+        const r = await api('baixarXml', estado.token, id);
+        baixarArquivo(r.nome, r.conteudo, 'application/xml'); return;
+      } else if (acao === 'pdf') {
+        toast('Gerando o PDF…');
+        const r = await api('gerarEspelho', estado.token, id);
+        baixarArquivo(r.nome, r.base64, 'application/pdf', true); return;
+      } else if (acao === 'lancar' || acao === 'desfazer') {
+        await api('marcarLancada', estado.token, id, acao === 'lancar');
+        toast(acao === 'lancar' ? 'Marcada como lançada' : 'Voltou para “a lançar”');
+        puxarNotificacoes();
+      }
+      desenharDetalhes(await api('detalhesNota', estado.token, id));
+      if (!$('aba-notas').hidden) carregarNotas();
+      if (!$('aba-receber').hidden) carregarUltimas();
+    } catch (err) { msg(err.message); }
+  });
+}
+
+$('detConteudo').addEventListener('click', e => {
+  const a = e.target.closest('[data-det-acao]');
+  if (a) { acaoDetalhe(a.dataset.detAcao, a); return; }
+  const r = e.target.closest('[data-det-rem]');
+  if (r) ocupado(r, async () => {
+    try { await api('removerBoleto', estado.token, r.dataset.detRem); desenharDetalhes(await api('detalhesNota', estado.token, estado.detId)); if (!$('aba-notas').hidden) carregarNotas(); }
+    catch (err) { aviso($('msgDet'), err.message, 'bad'); }
+  });
+});
+$('detConteudo').addEventListener('keydown', e => {
+  if (e.target.id === 'detBoleto' && e.key === 'Enter') { e.preventDefault(); acaoDetalhe('boleto', $('detConteudo').querySelector('[data-det-acao="boleto"]')); }
+});
+$('detConteudo').addEventListener('change', e => {
+  if (e.target.id !== 'detXml' || !e.target.files[0]) return;
+  const arq = e.target.files[0];
+  const leitor = new FileReader();
+  leitor.onload = async () => {
+    aviso($('msgDet'), 'Anexando o XML…', 'info');
+    try { desenharDetalhes(await api('anexarXml', estado.token, estado.detId, String(leitor.result))); toast('XML anexado'); if (!$('aba-notas').hidden) carregarNotas(); }
+    catch (err) { aviso($('msgDet'), err.message, 'bad'); }
+  };
+  leitor.readAsText(arq);
+});
+$('fecharNota').addEventListener('click', fecharDetalhes);
+$('modalNota').addEventListener('click', e => { if (e.target === $('modalNota')) fecharDetalhes(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('modalNota').hidden) fecharDetalhes(); });
+// Clique na linha (fora de botões) abre os detalhes
+['tbNotas', 'tbUltimas'].forEach(t => $(t).addEventListener('click', e => {
+  if (e.target.closest('button, a, input, select')) return;
+  const tr = e.target.closest('tr[data-id]');
+  if (tr) abrirDetalhes(tr.dataset.id);
+}));
+const resumoBoletosCel = b => b && b.qtd
+  ? '<b class="mono">' + b.qtd + ' · ' + dinheiro(b.total) + '</b>' + (b.proximo ? '<span class="sub">próximo ' + diaBr(b.proximo) + '</span>' : '')
+  : '<span class="muted">—</span>';
+
 /* ───────── Teclado e mouse no computador ───────── */
 const editavel = el => el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
 document.addEventListener('keydown', e => {
-  if ($('telaApp').hidden || $('aba-receber').hidden || !$('modalAval').hidden || !$('modalInstalar').hidden) return;
+  if ($('telaApp').hidden || $('aba-receber').hidden || !$('modalAval').hidden || !$('modalInstalar').hidden || !$('modalNota').hidden) return;
   // Alt+1/2/3 escolhem a situação
   const sit = { Digit1: 'OK', Digit2: 'DIVERGENCIA', Digit3: 'RECUSADA', Numpad1: 'OK', Numpad2: 'DIVERGENCIA', Numpad3: 'RECUSADA' }[e.code];
   if (e.altKey && !e.ctrlKey && !e.metaKey && sit) {
@@ -1418,7 +1777,7 @@ document.addEventListener('keydown', e => {
   }
   // Esc limpa a nota em andamento
   if (e.key === 'Escape') {
-    $('chave').value = ''; $('obs').value = ''; atualizarPrevia(); escolherSituacao('OK'); aviso($('msgBip'), ''); focarChave();
+    descartarNota();
     return;
   }
   // Leitor USB com o cursor fora do campo: manda os números para o campo da chave
