@@ -87,7 +87,7 @@
   nav.abas button.ativa { border-bottom-color: var(--accent); color: var(--ink); font-weight: 600; }
 
   /* Bipagem */
-  .bip input#chave { font: 600 22px/1.2 var(--mono); letter-spacing: .04em; padding: 14px; }
+  .bip input#chave { font: 600 18px/1.2 var(--mono); letter-spacing: .02em; padding: 12px; }
   .previa { border: 1px dashed var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; }
   .chaveFmt { font: 600 15px/1.5 var(--mono); word-spacing: .15em; }
   @media (max-width: 520px) {
@@ -153,7 +153,7 @@
   a.botaoLink { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 9px 14px; border-radius: 8px; font-weight: 600; }
   a.botaoLink.primario { background: var(--accent); color: var(--accent-ink); }
   .instalar .fechar { border: 0; background: none; color: var(--muted); font-size: 20px; padding: 4px 8px; }
-  @media (max-width: 520px) { .instalar { flex-wrap: wrap; } .instalar .acoes { flex: 1 1 100%; } .instalar .acoes .primario { flex: 1; } }
+
   .fundoModal { position: fixed; inset: 0; z-index: 40; background: rgba(5, 15, 10, .55); display: grid; place-items: end center; padding: 16px max(16px, env(safe-area-inset-left, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
   .fundoModal .card { width: min(560px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; }
   @media (min-width: 700px) { .fundoModal { place-items: center; } }
@@ -332,6 +332,53 @@
   .tipos button.sel { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); font-weight: 600; outline: 2px solid var(--accent); }
   .direitos { font-size: 11.5px; color: var(--muted); text-align: center; }
 
+  /* Versão 4.0: bipagem mais limpa */
+  .bipTopo { display: grid; gap: 2px; }
+  .dicaBip { font-size: 13px; }
+  .btCamera { justify-content: center; }
+  .bolAcoes { display: flex; gap: 6px; flex-wrap: wrap; }
+  .bolAcoes button { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; padding: 8px 12px; }
+  .bolManual { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; }
+  .boleto button { justify-self: end; padding: 4px 9px; }
+  @media (max-width: 520px) { .bolManual { grid-template-columns: 1fr 1fr; } .bolManual button { grid-column: 1 / -1; } }
+  .detalheNota { display: grid; gap: 12px; }
+  .maisOpcoes summary { cursor: pointer; font-weight: 600; font-size: 14px; padding: 4px 0; }
+  .camLuz { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,.6); color: #fff; border: 0; border-radius: 999px; width: 36px; height: 36px; padding: 0; display: grid; place-items: center; }
+  .camLuz[aria-pressed="true"] { background: #f5c542; color: #1b1b1b; }
+  .soCelular { display: none; }
+  @media (pointer: coarse) {
+    .soCelular { display: inline; }
+    /* Antes de ler uma nota, só a câmera e o campo. */
+    .bip.semNota:not(.rapido) .detalheNota { display: none; }
+    .btCamera { width: 100%; padding: 14px; font-size: 16px; }
+    .campoChave input#chave { font-size: 16px; padding: 11px 12px; font-weight: 500; letter-spacing: 0; }
+    .bip:not(.semNota) .dicaBip { display: none; }
+    .situacoes button { padding: 10px 4px; font-size: 14px; }
+    .situacoes button small { font-size: 11.5px; }
+    .previa .chaveFmt { display: none; }
+    .bolAcoes #bolCam { flex: 1 1 100%; justify-content: center; padding: 12px; }
+    .bolAcoes button:not(#bolCam) { flex: 1 1 0; justify-content: center; }
+    .boleto { grid-template-columns: auto 1fr auto auto; }
+    .boleto .muted { grid-column: 2 / 4; }
+    #tabUltimas.recolhido tbody tr:nth-child(n+6) { display: none; }
+  }
+  @media (max-width: 700px) {
+    /* Cabeçalho numa linha: marca, sino e loja. Nome e "Sair" ficam em Minha conta. */
+    .topoMarca small, #topoNome, #btSair { display: none; }
+    header.topo .wrap { padding-block: 8px 0; gap: 6px; }
+    .quem { gap: 6px; }
+    #tabUltimas td.opc { display: none; }
+    /* Aviso de instalar compacto */
+    .instalar { flex-wrap: nowrap; padding: 10px 12px; gap: 10px; }
+    .instalar .iconeApp { width: 36px; height: 36px; border-radius: 9px; }
+    .instalar .txt span { display: none; }
+    .instalar .txt b { font-size: 14px; }
+    .instalar .acoes { flex: none; }
+    .instalar .acoes .primario, .instalar .acoes a.botaoLink { padding: 8px 12px; font-size: 14px; }
+    .previa { padding: 10px 12px; }
+    .chaveFmt { font-size: 11.5px; color: var(--muted); }
+  }
+
   .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--ink); color: var(--bg);
     padding: 10px 16px; border-radius: 10px; font-weight: 500; z-index: 20; max-width: calc(100% - 32px); }
   .vazio { padding: 20px; text-align: center; color: var(--muted); }
@@ -414,70 +461,98 @@
 
     <!-- Receber -->
     <div id="aba-receber" class="aba" hidden>
-      <div class="card bip">
-        <div>
-          <h2>Bipar nota recebida</h2>
-          <div class="muted" style="font-size:13px"><span class="soToque">Toque em <b>Câmera</b> e aponte para o código de barras do DANFE. Depois, bipe os boletos da nota.</span><span class="soMouse">Passe o leitor USB no código de barras do DANFE e, em seguida, nos boletos da nota. Também dá para digitar a chave (44 números) ou a linha digitável do boleto.</span></div>
+      <div class="card bip semNota" id="cardBip">
+        <div class="bipTopo">
+          <h2>Receber nota</h2>
+          <div class="muted dicaBip"><span class="soToque">Leia o código de barras da nota e, depois, os boletos.</span><span class="soMouse">Passe o leitor USB na nota e, em seguida, nos boletos. Também dá para digitar a chave ou a linha digitável.</span></div>
         </div>
         <div id="camPainel" class="camPainel" hidden>
           <video id="camVideo" playsinline muted></video>
           <div class="camMira"></div>
           <div class="camEstado" id="camEstado">Abrindo a câmera…</div>
+          <button type="button" id="camLuz" class="camLuz" aria-label="Lanterna" aria-pressed="false" hidden>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2h6l-1 6H10z"/><path d="M10 8v12a2 2 0 0 0 4 0V8"/></svg>
+          </button>
           <button type="button" id="camFechar" class="camFechar" aria-label="Fechar câmera">✕</button>
         </div>
         <div id="camFalha" class="aviso warn" hidden style="display:grid;gap:10px">
           <span>A câmera ao vivo não abriu neste aparelho. Use a foto: chegue perto até o código de barras ocupar quase toda a largura.</span>
           <button type="button" id="camFoto" class="primario">Tirar foto do código</button>
         </div>
+        <button type="button" id="btCamera" class="btCamera primario" aria-label="Ler com a câmera">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h3l2-3h6l2 3h3v13H4z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span id="btCameraTxt">Ler com a câmera</span>
+        </button>
         <div class="campoChave">
-          <input id="chave" inputmode="numeric" enterkeyhint="send" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Chave da nota ou boleto" aria-label="Chave da nota ou código do boleto">
-          <button type="button" id="btCamera" class="btCamera primario" aria-label="Ler com a câmera">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h3l2-3h6l2 3h3v13H4z"/><circle cx="12" cy="13" r="4"/></svg>
-            <span id="btCameraTxt">Câmera</span>
-          </button>
+          <input id="chave" inputmode="numeric" enterkeyhint="send" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="ou digite a chave da nota" aria-label="Chave da nota ou código do boleto">
         </div>
         <input type="file" id="fotoCodigo" accept="image/*" capture="environment" hidden>
+
         <div id="previa" class="previa" hidden>
-          <div class="previaTopo"><div class="chaveFmt" id="pvChave"></div><button type="button" class="copiar" id="btDescartar">Descartar</button></div>
-          <div class="dados">
-            <div><span>Fornecedor (CNPJ)</span><b id="pvEmit" class="mono"></b></div>
-            <div><span>Nota / Série</span><b id="pvNum" class="mono"></b></div>
-            <div><span>Emissão</span><b id="pvEmi" class="mono"></b></div>
+          <div class="previaTopo">
+            <div><b id="pvNum"></b><span class="muted" style="font-size:13px"> · emissão <span id="pvEmi" class="mono"></span></span>
+              <div class="muted mono" style="font-size:13px">Fornecedor <span id="pvEmit"></span></div></div>
+            <button type="button" class="copiar" id="btDescartar">Descartar</button>
           </div>
+          <div class="chaveFmt" id="pvChave"></div>
         </div>
+
         <div id="boxBoletos" class="boletos" hidden>
           <div class="boletosTopo"><b id="boletosTitulo">Boletos desta nota</b><span class="muted mono" id="boletosResumo" style="font-size:13px"></span></div>
           <div id="listaBoletos" style="display:grid;gap:6px"></div>
-          <div class="muted" style="font-size:12.5px">Bipe os boletos (o código de barras do boleto) ou digite a linha digitável no campo acima. Valor, vencimento e banco são lidos do código.</div>
+          <div class="bolAcoes">
+            <button type="button" id="bolCam" class="primario">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h3l2-3h6l2 3h3v13H4z"/><circle cx="12" cy="13" r="4"/></svg>
+              Ler boleto com a câmera</button>
+            <button type="button" id="bolLinha">Linha digitável</button>
+            <button type="button" id="bolManual" class="soV4">Sem código</button>
+          </div>
+          <div id="bolLinhaBox" class="linhaApp" hidden>
+            <input id="bolLinhaInput" inputmode="numeric" autocomplete="off" placeholder="47 números da linha digitável" aria-label="Linha digitável do boleto">
+            <button type="button" id="bolLinhaOk" class="primario copiar">Adicionar</button>
+          </div>
+          <div id="bolManualBox" class="bolManual" hidden>
+            <label>Vencimento<input type="date" id="bmVenc"></label>
+            <label>Valor (R$)<input id="bmValor" inputmode="decimal" autocomplete="off" placeholder="0,00"></label>
+            <button type="button" id="bmAdd" class="primario">Adicionar boleto</button>
+          </div>
         </div>
-        <div class="situacoes" role="radiogroup" aria-label="Situação da mercadoria">
-          <button type="button" data-s="OK" class="sel" role="radio" aria-keyshortcuts="Alt+1">Chegou OK<small>tudo conferido<span class="atalho">Alt+1</span></small></button>
-          <button type="button" data-s="DIVERGENCIA" role="radio" aria-keyshortcuts="Alt+2">Divergência<small>falta, avaria…<span class="atalho">Alt+2</span></small></button>
-          <button type="button" data-s="RECUSADA" role="radio" aria-keyshortcuts="Alt+3">Recusada<small>devolvida<span class="atalho">Alt+3</span></small></button>
+
+        <div class="detalheNota">
+          <div class="situacoes" role="radiogroup" aria-label="Situação da mercadoria">
+            <button type="button" data-s="OK" class="sel" role="radio" aria-keyshortcuts="Alt+1">Chegou OK<small>tudo conferido<span class="atalho">Alt+1</span></small></button>
+            <button type="button" data-s="DIVERGENCIA" role="radio" aria-keyshortcuts="Alt+2">Divergência<small>falta, avaria…<span class="atalho">Alt+2</span></small></button>
+            <button type="button" data-s="RECUSADA" role="radio" aria-keyshortcuts="Alt+3">Recusada<small>devolvida<span class="atalho">Alt+3</span></small></button>
+          </div>
+          <div id="blocoDiv" class="grade2" hidden>
+            <label id="lblTipo">Tipo de divergência<select id="tipoDiv"></select></label>
+            <label>Observação <span class="soMouse" style="font-size:12px">(Ctrl+Enter registra)</span><textarea id="obs" rows="2" maxlength="500" placeholder="Ex.: faltaram 2 caixas de leite"></textarea></label>
+          </div>
+          <details class="maisOpcoes" id="maisOpcoes">
+            <summary>Mais opções <span class="muted" id="maisResumo"></span></summary>
+            <div style="display:grid;gap:10px;margin-top:10px">
+              <div id="boxTipo" class="soV3" style="display:grid;gap:6px">
+                <div class="rotulo" style="margin:0">Tipo da nota <span style="font-weight:400">(opcional · a analista confirma no lançamento)</span></div>
+                <div class="tipos" id="tiposNota" role="radiogroup" aria-label="Tipo da nota"></div>
+              </div>
+              <div class="urg">
+                <input type="checkbox" id="urgente">
+                <label for="urgente">Marcar como URGENTE<span class="dica">Só para esta nota. A analista é avisada na hora. <span class="atalho">Alt+U</span></span></label>
+              </div>
+            </div>
+          </details>
+          <button id="btRegistrar" class="primario registrar">Registrar recebimento<span class="atalho">Enter</span></button>
         </div>
-        <div id="blocoDiv" class="grade2" hidden>
-          <label id="lblTipo">Tipo de divergência<select id="tipoDiv"></select></label>
-          <label>Observação <span class="soMouse" style="font-size:12px">(Ctrl+Enter registra)</span><textarea id="obs" rows="2" maxlength="500" placeholder="Ex.: faltaram 2 caixas de leite"></textarea></label>
-        </div>
-        <div id="boxTipo" class="soV3" style="display:grid;gap:6px">
-          <div class="rotulo" style="margin:0">Tipo da nota <span style="font-weight:400">(opcional · a analista confirma no lançamento)</span></div>
-          <div class="tipos" id="tiposNota" role="radiogroup" aria-label="Tipo da nota"></div>
-        </div>
-        <div class="urg">
-          <input type="checkbox" id="urgente">
-          <label for="urgente">Marcar como URGENTE<span class="dica">Só para esta nota. A analista é avisada na hora. <span class="atalho">Alt+U</span></span></label>
-        </div>
-        <button id="btRegistrar" class="primario registrar">Registrar recebimento<span class="atalho">Enter</span></button>
-        <label class="opcao"><input type="checkbox" id="autoOk"> Registrar como “Chegou OK” assim que bipar (mais rápido)</label>
         <div id="msgBip" class="aviso" hidden></div>
       </div>
 
       <div class="card">
         <h2>Últimos registros da loja</h2>
-        <div class="tabela"><table class="resp">
+        <div class="tabela"><table class="resp recolhido" id="tabUltimas">
           <thead><tr><th>Quando</th><th>Nota</th><th>Fornecedor</th><th>Boletos</th><th>Situação</th><th>Conferência</th><th>Analista</th></tr></thead>
           <tbody id="tbUltimas"></tbody>
         </table></div>
+        <button type="button" id="btMaisUltimas" class="link soCelular" style="justify-self:start">Ver mais registros</button>
       </div>
     </div>
 
@@ -677,6 +752,11 @@
     </div>
 
     <div id="aba-conta" class="aba" hidden>
+      <div class="card" style="max-width:560px">
+        <div class="detTopo"><div><h2 id="contaNome"></h2><div class="muted" id="contaPerfil" style="font-size:13px"></div></div>
+          <button type="button" id="btSair2">Sair</button></div>
+        <label class="opcao"><input type="checkbox" id="autoOk"> Modo rápido: registrar como “Chegou OK” assim que a nota for lida</label>
+      </div>
       <div class="card" style="max-width:560px">
         <div><h2>Sobre o app</h2><div class="muted" id="contaVersao" style="font-size:13px"></div></div>
         <ul class="novidades" id="contaNovidades"></ul>
@@ -1061,6 +1141,11 @@ const Leitor = (() => {
     video.setAttribute('playsinline', ''); video.muted = true;
     video.srcObject = fluxo;
     await video.play();
+    // Foco contínuo, quando o celular permite (ajuda a ler o código fino do boleto).
+    try {
+      const t = fluxo.getVideoTracks()[0], cap = t.getCapabilities ? t.getCapabilities() : {};
+      if (cap.focusMode && cap.focusMode.indexOf('continuous') >= 0) await t.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+    } catch (e) {}
     const cv = document.createElement('canvas');
     const ctx = cv.getContext('2d', { willReadFrequently: true });
     timer = setInterval(async () => {
@@ -1083,7 +1168,14 @@ const Leitor = (() => {
     if (fluxo) { fluxo.getTracks().forEach(t => t.stop()); fluxo = null; }
   }
 
-  return { lerFoto, ligar, desligar, ligado: () => !!fluxo };
+  function temLanterna() {
+    try { const t = fluxo && fluxo.getVideoTracks()[0]; return !!(t && t.getCapabilities && t.getCapabilities().torch); } catch (e) { return false; }
+  }
+  async function lanterna(ligar) {
+    try { await fluxo.getVideoTracks()[0].applyConstraints({ advanced: [{ torch: !!ligar }] }); return true; } catch (e) { return false; }
+  }
+
+  return { lerFoto, ligar, desligar, ligado: () => !!fluxo, temLanterna, lanterna };
 })();
 
 const toque = window.matchMedia && matchMedia('(pointer: coarse)').matches;
@@ -1125,7 +1217,7 @@ function camEstado(txt, lido) {
 }
 
 // Não lê enquanto registra ou com uma janela aberta. Com uma nota esperando, continua lendo os boletos.
-const camPausada = () => registrando || !$('modalAval').hidden || !$('modalNota').hidden;
+const camPausada = () => registrando || !$('modalAval').hidden || (!$('modalNota').hidden && !detCamLigada);
 
 function camIgnorar(chave) { if (chave) cam.ignorar[chave] = Date.now() + 10000; }
 
@@ -1143,11 +1235,12 @@ async function abrirCamera() {
     medirTopo();
     $('camFalha').hidden = true;
     $('camPainel').hidden = false;
-    $('btCamera').classList.add('aberta'); $('btCameraTxt').textContent = 'Fechar';
+    $('btCamera').classList.add('aberta'); $('btCameraTxt').textContent = 'Fechar a câmera';
     camEstado('Abrindo a câmera…');
     try {
       await Promise.all([carregarZXing(), Leitor.ligar($('camVideo'), camLeu, camPausada)]);
-      camEstado('Aponte para o código de barras do DANFE');
+      camEstado(estado.notaPend ? 'Aponte para o código de barras do boleto' : 'Aponte para o código de barras do DANFE');
+      $('camLuz').hidden = !Leitor.temLanterna(); $('camLuz').setAttribute('aria-pressed', 'false');
       try { cam.trava = navigator.wakeLock ? await navigator.wakeLock.request('screen') : null; } catch (e) {}
     } catch (err) {
       pararCamera(true);
@@ -1161,7 +1254,8 @@ function pararCamera(esquecer) {
   Leitor.desligar();
   $('camVideo').srcObject = null;
   $('camPainel').hidden = true;
-  $('btCamera').classList.remove('aberta'); $('btCameraTxt').textContent = 'Câmera';
+  $('btCamera').classList.remove('aberta'); $('btCameraTxt').textContent = 'Ler com a câmera';
+  $('camLuz').hidden = true;
   try { cam.trava && cam.trava.release(); } catch (e) {}
   cam.trava = null;
   if (esquecer) { cam.quer = false; guardar.set('nfe_cam_aberta', null); }
@@ -1175,6 +1269,10 @@ $('btCamera').addEventListener('click', () => {
   abrirCamera();
 });
 $('camFechar').addEventListener('click', () => pararCamera(true));
+$('camLuz').addEventListener('click', async () => {
+  const ligar = $('camLuz').getAttribute('aria-pressed') !== 'true';
+  if (await Leitor.lanterna(ligar)) $('camLuz').setAttribute('aria-pressed', String(ligar));
+});
 $('camFoto').addEventListener('click', () => { $('camFalha').hidden = true; $('fotoCodigo').click(); });
 
 // Celular bloqueado ou outro app: desliga a câmera e religa ao voltar.
@@ -1252,6 +1350,7 @@ $('formCadastro').addEventListener('submit', e => {
   });
 });
 
+$('btSair2').addEventListener('click', () => $('btSair').click());
 $('btSair').addEventListener('click', () => { api('sair', estado.token).catch(() => {}); telaEntrada('Você saiu.', 'info'); });
 
 /* ───────── App ───────── */
@@ -1271,6 +1370,8 @@ function abrirApp(ctx) {
   $('telaEntrada').hidden = true; $('telaApp').hidden = false;
   $('topoNome').textContent = ctx.usuario.nome + ' · ' + ctx.usuario.perfil.toLowerCase();
   $('topoLoja').textContent = ctx.usuario.loja || 'Todas as lojas';
+  $('contaNome').textContent = ctx.usuario.nome;
+  $('contaPerfil').textContent = ({ LOJA: 'Loja', GERENTE: 'Gerente', ANALISTA: 'Analista fiscal', FINANCEIRO: 'Financeiro', ADMIN: 'Administrador' }[ctx.usuario.perfil] || ctx.usuario.perfil) + (ctx.usuario.loja ? ' · ' + ctx.usuario.loja : '') + ' · usuário ' + ctx.usuario.usuario;
   $('tipoDiv').innerHTML = ctx.tiposDivergencia.map(t => '<option>' + esc(t) + '</option>').join('');
   $('fLoja').innerHTML = '<option value="">Todas</option>' + ctx.lojas.map(l => '<option value="' + esc(l.id) + '">' + esc(l.nome) + '</option>').join('');
   $('autoOk').checked = guardar.get('nfe_auto_ok') === '1';
@@ -1322,10 +1423,11 @@ function atualizarPrevia() {
   if (info && info.ok) {
     $('pvChave').textContent = fmtChave(info.chave);
     $('pvEmit').textContent = info.cnpj;
-    $('pvNum').textContent = info.numero + ' / ' + info.serie;
+    $('pvNum').textContent = 'Nota nº ' + info.numero + ' · série ' + info.serie;
     $('pvEmi').textContent = info.emissao;
   }
   desenharBoletos();
+  atualizarCartao();
   return info;
 }
 
@@ -1346,9 +1448,21 @@ function processarCodigo(entrada) {
   atualizarPrevia();
   if ($('autoOk').checked && estado.situacao === 'OK') { registrar(); return true; }
   bip(true);
+  if (Leitor.ligado()) camEstado('Nota lida ✓  Agora aponte para os boletos', true);
   aviso($('msgBip'), 'Nota lida. Bipe agora os boletos dela (se houver), confira a situação e toque em Registrar recebimento.', 'info');
   return true;
 }
+
+/** No celular, situação e opções só aparecem depois de ler uma nota (ou sempre, no modo rápido). */
+function atualizarCartao() {
+  $('cardBip').classList.toggle('semNota', !estado.notaPend);
+  $('cardBip').classList.toggle('rapido', $('autoOk').checked);
+  const extras = [];
+  if (estado.tipoNota) extras.push(nomeCat(estado.tipoNota).replace(' (serviços e insumos)', ''));
+  if ($('urgente').checked) extras.push('URGENTE');
+  $('maisResumo').textContent = extras.length ? '· ' + extras.join(' · ') : '· tipo da nota e urgência';
+}
+$('urgente').addEventListener('change', atualizarCartao);
 
 function descartarNota() {
   estado.notaPend = ''; estado.boletosPend = [];
@@ -1368,10 +1482,13 @@ function servidorNaVersao(min) {
 }
 const AVISO_SERVIDOR_BOLETOS = 'Os boletos ainda não estão ligados no servidor: o administrador precisa publicar o Code.gs 1.9.0 no Google (Gerenciar implantações → Nova versão).';
 
+const mesmoBoleto = (x, b) => b.barras ? x.barras === b.barras : (!x.barras && x.vencimento === b.vencimento && Math.abs(x.valor - b.valor) < 0.005);
+const paraServidor = b => b.barras || { manual: true, vencimento: b.vencimento, valor: b.valor };
+
 async function adicionarBoletoLido(b) {
   if (!servidorNaVersao('1.9.0')) { bip(false); aviso($('msgBip'), AVISO_SERVIDOR_BOLETOS, 'warn'); return; }
   if (estado.notaPend) {
-    if (estado.boletosPend.some(x => x.barras === b.barras)) { bip(false); aviso($('msgBip'), 'Este boleto já foi bipado para esta nota.', 'warn'); return; }
+    if (estado.boletosPend.some(x => mesmoBoleto(x, b))) { bip(false); aviso($('msgBip'), 'Este boleto já foi informado para esta nota.', 'warn'); return; }
     estado.boletosPend.push(b);
     estado.boletosPend.sort((x, y) => (x.vencimento || '9').localeCompare(y.vencimento || '9'));
     bip(true); desenharBoletos();
@@ -1382,7 +1499,7 @@ async function adicionarBoletoLido(b) {
   const u = ultimaNotaAtiva();
   if (!u) { bip(false); aviso($('msgBip'), 'Bipe primeiro a nota fiscal e, logo depois, os boletos dela.', 'warn'); return; }
   try {
-    u.boletos = await api('adicionarBoleto', estado.token, u.id, b.barras);
+    u.boletos = await api('adicionarBoleto', estado.token, u.id, paraServidor(b));
     u.quando = Date.now();
     bip(true); desenharBoletos(); carregarUltimas();
     aviso($('msgBip'), 'Boleto adicionado à nota nº ' + u.numero + ': ' + textoBoleto(b) + '.', 'ok');
@@ -1402,7 +1519,7 @@ function desenharBoletos() {
   $('boletosResumo').textContent = lista.length ? lista.length + (lista.length === 1 ? ' boleto · ' : ' boletos · ') + dinheiro(total) : '';
   $('listaBoletos').innerHTML = lista.length ? lista.map((b, i) =>
     '<div class="boleto"><span class="mono">' + esc(b.parcela) + '</span><span>' + (b.vencimento ? 'vence ' + diaBr(b.vencimento) : 'sem vencimento') + '</span>' +
-    '<b>' + dinheiro(b.valor) + '</b><span class="muted">' + esc(b.banco) + '</span>' +
+    '<b>' + dinheiro(b.valor) + '</b><span class="muted">' + esc(b.manual || !b.barras && !b.linha ? 'digitado à mão' : b.banco) + '</span>' +
     '<button type="button" class="copiar" aria-label="Remover boleto" data-rem-boleto="' + (pend ? 'p' + i : esc(b.id)) + '">✕</button></div>').join('')
     : '<div class="muted" style="font-size:13px">Nenhum boleto ainda.</div>';
 }
@@ -1420,6 +1537,37 @@ $('listaBoletos').addEventListener('click', e => {
   });
 });
 $('btDescartar').addEventListener('click', descartarNota);
+
+/* Boletos: câmera, linha digitável ou sem código */
+$('bolCam').addEventListener('click', () => {
+  if (Leitor.ligado()) { camEstado('Aponte para o código de barras do boleto'); $('camPainel').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
+  if (guardar.get('nfe_camera') === 'foto') { $('fotoCodigo').click(); return; }
+  cam.quer = true; guardar.set('nfe_cam_aberta', '1');
+  abrirCamera();
+});
+$('bolLinha').addEventListener('click', () => { $('bolLinhaBox').hidden = !$('bolLinhaBox').hidden; $('bolManualBox').hidden = true; if (!$('bolLinhaBox').hidden) $('bolLinhaInput').focus(); });
+$('bolManual').addEventListener('click', () => {
+  $('bolManualBox').hidden = !$('bolManualBox').hidden; $('bolLinhaBox').hidden = true;
+  if (!$('bolManualBox').hidden) { if (!$('bmVenc').value) $('bmVenc').value = hojeLocal(); $('bmValor').focus(); }
+});
+function adicionarLinhaDigitada() {
+  const c = classificarCodigo($('bolLinhaInput').value);
+  if (!c || c.tipo === 'nfe') { bip(false); aviso($('msgBip'), 'Linha digitável não reconhecida. Confira se tem 47 números (48 em contas de consumo).', 'bad'); return; }
+  if (c.tipo === 'erro') { bip(false); aviso($('msgBip'), c.erro, 'bad'); return; }
+  $('bolLinhaInput').value = ''; $('bolLinhaBox').hidden = true;
+  adicionarBoletoLido(c.info);
+}
+$('bolLinhaOk').addEventListener('click', adicionarLinhaDigitada);
+$('bolLinhaInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); adicionarLinhaDigitada(); } });
+function adicionarManual() {
+  const venc = $('bmVenc').value, valor = lerValor($('bmValor').value);
+  if (!venc) { aviso($('msgBip'), 'Informe a data de vencimento do boleto.', 'bad'); $('bmVenc').focus(); return; }
+  if (!(valor > 0)) { aviso($('msgBip'), 'Informe o valor do boleto (por exemplo 1.234,56).', 'bad'); $('bmValor').focus(); return; }
+  $('bmValor').value = ''; $('bolManualBox').hidden = true;
+  adicionarBoletoLido({ ok: true, barras: '', manual: true, banco: 'Informado à mão', vencimento: venc, valor: Math.round(valor * 100) / 100 });
+}
+$('bmAdd').addEventListener('click', adicionarManual);
+$('bmValor').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); adicionarManual(); } });
 
 $('chave').addEventListener('input', () => {
   const d = digitos($('chave').value);
@@ -1443,7 +1591,7 @@ $('chave').addEventListener('keydown', e => {
   }
   if (estado.notaPend && (!$('autoOk').checked || estado.situacao !== 'OK')) registrar();
 });
-$('autoOk').addEventListener('change', () => { guardar.set('nfe_auto_ok', $('autoOk').checked ? '1' : null); focarChave(); });
+$('autoOk').addEventListener('change', () => { guardar.set('nfe_auto_ok', $('autoOk').checked ? '1' : null); atualizarCartao(); toast($('autoOk').checked ? 'Modo rápido ligado' : 'Modo rápido desligado'); });
 $('btRegistrar').addEventListener('click', registrar);
 
 let registrando = false;
@@ -1453,7 +1601,7 @@ async function registrar() {
   if (!info.ok) { aviso($('msgBip'), estado.notaPend || digitos($('chave').value) ? info.erro : 'Bipe a nota fiscal primeiro.', 'bad'); bip(false); focarChave(); return; }
   registrando = true; $('btRegistrar').disabled = true;
   aviso($('msgBip'), 'Registrando…', 'info');
-  const boletos = estado.boletosPend.map(b => b.barras);
+  const boletos = estado.boletosPend.map(paraServidor);
   try {
     const t0 = performance.now();
     const r = await api('registrarNota', estado.token, { chave: info.chave, situacao: estado.situacao, tipo: $('tipoDiv').value, observacao: $('obs').value, urgente: $('urgente').checked, boletos, categoria: estado.tipoNota || '' });
@@ -1489,17 +1637,23 @@ async function registrar() {
   }
 }
 
+$('btMaisUltimas').addEventListener('click', () => {
+  const rec = $('tabUltimas').classList.toggle('recolhido');
+  $('btMaisUltimas').textContent = rec ? 'Ver mais registros' : 'Ver menos';
+});
+
 async function carregarUltimas() {
   const tb = $('tbUltimas');
   try {
     const itens = await api('ultimasDaLoja', estado.token);
+    $('btMaisUltimas').hidden = itens.length <= 5;
     tb.innerHTML = itens.length ? itens.map(r =>
       '<tr data-id="' + esc(r.id) + '"><td>' + esc(r.registradoEm) + '<span class="sub">' + esc(r.usuario) + '</span></td>' +
       '<td class="mono">' + esc(r.numero) + '<span class="sub">série ' + esc(r.serie) + '</span></td>' +
-      '<td class="mono">' + esc(r.cnpjEmitente) + '</td>' +
+      '<td class="mono opc">' + esc(r.cnpjEmitente) + '</td>' +
       '<td>' + resumoBoletosCel(r.boletos) + '</td>' +
       '<td>' + chip(SIT, r.situacao) + (r.tipo ? '<span class="sub">' + esc(r.tipo) + '</span>' : '') + (r.categoria ? '<span class="sub">' + esc(nomeCat(r.categoria)) + '</span>' : '') + '</td>' +
-      '<td>' + chip(VAL, r.validacao) + '</td>' +
+      '<td class="opc">' + chip(VAL, r.validacao) + '</td>' +
       '<td>' + (r.lancamento === 'LANCADA' ? '<span class="chip info">Lançada</span>' : '<span class="chip neutro">A lançar</span>') + '</td></tr>'
     ).join('') : '<tr><td colspan="7" class="vazio">Nenhuma nota registrada ainda. Bipe a primeira acima.</td></tr>';
   } catch (err) { tb.innerHTML = '<tr><td colspan="7" class="vazio">' + esc(err.message) + '</td></tr>'; }
@@ -1723,9 +1877,9 @@ function atualizarAvisoInstalar() {
     $('avisoInstalar').hidden = guardar.get('nfe_site_visto') === '1';
     return;
   }
-  $('avisoInstalarTitulo').textContent = 'Coloque o app na tela do celular';
+  $('avisoInstalarTitulo').textContent = toque ? 'Instale o app no celular' : 'Coloque o app na tela do celular';
   $('avisoInstalarTexto').textContent = MODO_SITE ? 'Instale o Donelli Fiscal: abre em tela cheia, como um aplicativo.' : 'Abra com um toque, como um aplicativo.';
-  $('avisoInstalarBotao').textContent = MODO_SITE && pedidoInstalacao ? 'Instalar app' : 'Adicionar à tela inicial';
+  $('avisoInstalarBotao').textContent = toque ? 'Instalar' : (MODO_SITE && pedidoInstalacao ? 'Instalar app' : 'Adicionar à tela inicial');
   $('avisoInstalar').hidden = appInstalado() || !(toque || pedidoInstalacao) || guardar.get('nfe_instalado') === '1';
 }
 $('avisoSiteNovo').addEventListener('click', () => guardar.set('nfe_site_visto', '1'));
@@ -1787,7 +1941,7 @@ async function abrirDetalhes(id) {
   try { desenharDetalhes(await api('detalhesNota', estado.token, id)); }
   catch (err) { $('detConteudo').innerHTML = '<div class="aviso bad">' + esc(err.message) + '</div>'; }
 }
-function fecharDetalhes() { $('modalNota').hidden = true; estado.detId = null; focarChave(); }
+function fecharDetalhes() { pararCameraDetalhe(); $('modalNota').hidden = true; estado.detId = null; focarChave(); }
 
 function desenharDetalhes(d) {
   const n = d.nota, x = d.xml, bol = d.boletos || [];
@@ -1824,12 +1978,18 @@ function desenharDetalhes(d) {
     '<h3>Boletos ' + (bol.length ? '(' + bol.length + ' · ' + dinheiro(totalBol) + ')' : '') + '</h3>' +
     (bol.length ? '<div class="tabela"><table class="resp"><thead><tr><th>Parcela</th><th>Vencimento</th><th>Valor</th><th>Banco</th><th data-largo>Linha digitável</th><th></th></tr></thead><tbody>' +
       bol.map(b => '<tr><td class="mono">' + esc(b.parcela) + '</td><td>' + (b.vencimento ? diaBr(b.vencimento) : '—') + '</td><td class="mono"><b>' + dinheiro(b.valor) + '</b></td><td>' + esc(b.banco) + '</td>' +
-        '<td><span class="mono linhaDig">' + esc(b.linha) + '</span> <button class="copiar" data-copiar="' + esc(b.linha.replace(/\D/g, '')) + '">Copiar</button></td>' +
+        '<td>' + (b.linha ? '<span class="mono linhaDig">' + esc(b.linha) + '</span> <button class="copiar" data-copiar="' + esc(b.linha.replace(/\D/g, '')) + '">Copiar</button>' : '<span class="muted">sem código (digitado à mão)</span>') + '</td>' +
         '<td><button class="link" data-det-rem="' + esc(b.id) + '" style="font-size:12px">remover</button></td></tr>').join('') +
       '</tbody></table></div>' : '<div class="muted" style="font-size:13px">Nenhum boleto registrado para esta nota.</div>') +
     comparacao +
+    '<div class="bolAcoes"><button type="button" class="primario" data-det-acao="cam">Ler boleto com a câmera</button>' +
+      (servidorNaVersao('4.0') ? '<button type="button" data-det-acao="manualAbrir">Sem código</button>' : '') + '</div>' +
+    '<div id="detCamBox" class="camPainel" hidden><video id="detVideo" playsinline muted></video><div class="camMira"></div><div class="camEstado">Aponte para o código de barras do boleto</div>' +
+      '<button type="button" class="camFechar" data-det-acao="camFechar" aria-label="Fechar câmera">✕</button></div>' +
     '<div class="linhaApp"><input id="detBoleto" inputmode="numeric" autocomplete="off" placeholder="Bipe o boleto ou digite a linha digitável" aria-label="Adicionar boleto">' +
       '<button type="button" class="primario copiar" data-det-acao="boleto">Adicionar</button></div>' +
+    '<div id="detManual" class="bolManual" hidden><label>Vencimento<input type="date" id="detMVenc"></label><label>Valor (R$)<input id="detMValor" inputmode="decimal" placeholder="0,00"></label>' +
+      '<button type="button" class="primario" data-det-acao="manual">Adicionar boleto</button></div>' +
 
     '<h3>XML e PDF da nota</h3>' +
     (x
@@ -1846,9 +2006,40 @@ function desenharDetalhes(d) {
     '<div id="msgDet" class="aviso" hidden></div>';
 }
 
+let detCamLigada = false;
+function pararCameraDetalhe() { if (detCamLigada) { Leitor.desligar(); detCamLigada = false; } const b = $('detCamBox'); if (b) b.hidden = true; }
+async function ligarCameraDetalhe() {
+  if (Leitor.ligado()) pararCamera(false);
+  $('detCamBox').hidden = false;
+  try {
+    await carregarZXing();
+    detCamLigada = true;
+    await Leitor.ligar($('detVideo'), async codigo => {
+      const c = classificarCodigo(codigo);
+      if (!c || c.tipo !== 'boleto') return;
+      pararCameraDetalhe(); bip(true);
+      try { await api('adicionarBoleto', estado.token, estado.detId, c.info.barras); toast('Boleto lido: ' + dinheiro(c.info.valor)); desenharDetalhes(await api('detalhesNota', estado.token, estado.detId)); if (!$('aba-notas').hidden) carregarNotas(); }
+      catch (err) { aviso($('msgDet'), err.message, 'bad'); }
+    }, () => false);
+  } catch (err) { pararCameraDetalhe(); aviso($('msgDet'), 'A câmera não abriu. Digite a linha digitável ou use "Sem código".', 'warn'); }
+}
+
 async function acaoDetalhe(acao, botao) {
   const id = estado.detId;
   const msg = t => aviso($('msgDet'), t, 'bad');
+  if (acao === 'cam') { ligarCameraDetalhe(); return; }
+  if (acao === 'camFechar') { pararCameraDetalhe(); return; }
+  if (acao === 'manualAbrir') { $('detManual').hidden = !$('detManual').hidden; if (!$('detMVenc').value) $('detMVenc').value = hojeLocal(); $('detMValor').focus(); return; }
+  if (acao === 'manual') {
+    const venc = $('detMVenc').value, valor = lerValor($('detMValor').value);
+    if (!venc) { msg('Informe a data de vencimento do boleto.'); return; }
+    if (!(valor > 0)) { msg('Informe o valor do boleto (por exemplo 1.234,56).'); return; }
+    await ocupado(botao, async () => {
+      try { await api('adicionarBoleto', estado.token, id, { manual: true, vencimento: venc, valor: Math.round(valor * 100) / 100 }); toast('Boleto adicionado'); desenharDetalhes(await api('detalhesNota', estado.token, id)); if (!$('aba-notas').hidden) carregarNotas(); }
+      catch (err) { msg(err.message); }
+    });
+    return;
+  }
   await ocupado(botao, async () => {
     try {
       if (acao === 'boleto') {
@@ -2190,7 +2381,7 @@ async function carregarPagar() {
       return '<tr data-id="' + esc(b.notaId) + '"' + (vencido ? ' class="linhaUrgente"' : '') + '><td>' + (b.vencimento ? diaBr(b.vencimento) : '—') + (vencido ? '<span class="chip bad">vencido</span>' : b.vencimento === d.hoje ? '<span class="chip warn">hoje</span>' : '') + '</td>' +
         '<td>' + esc(b.fornecedor) + '<span class="sub">nota ' + esc(b.numero) + ' · ' + esc(b.loja) + '</span></td><td><span class="chip neutro"><span class="ponto" style="background:' + (CORES_CAT[b.categoria] || CORES_CAT.SEM) + '"></span>' + esc(nomeCat(b.categoria)) + '</span></td>' +
         '<td class="mono"><b>' + dinheiro(b.valor) + '</b><span class="sub">' + esc(b.banco) + '</span></td>' +
-        '<td><span class="mono linhaDig">' + esc(b.linha) + '</span> <button class="copiar" data-copiar="' + esc(b.linha.replace(/\D/g, '')) + '">Copiar</button></td>' +
+        '<td>' + (b.linha ? '<span class="mono linhaDig">' + esc(b.linha) + '</span> <button class="copiar" data-copiar="' + esc(b.linha.replace(/\D/g, '')) + '">Copiar</button>' : '<span class="muted">sem código</span>') + '</td>' +
         '<td>' + (d.podePagar ? '<button class="primario copiar" data-pago="' + esc(b.id) + '" data-v="1">Dar baixa</button>' : '<span class="chip neutro">em aberto</span>') + '</td></tr>';
     }).join('') : '<tr><td colspan="6" class="vazio">Nenhum boleto em aberto.</td></tr>';
     $('tbPagos').innerHTML = d.pagosRecentes.map(b => '<tr><td>' + esc(b.pagoEm) + '<span class="sub">' + esc(b.pagoPor) + '</span></td><td>' + esc(b.fornecedor) + '<span class="sub">vencia ' + diaBr(b.vencimento) + '</span></td><td class="mono">' + dinheiro(b.valor) + '</td><td>' +
@@ -2283,6 +2474,8 @@ document.querySelectorAll('.anoAtual').forEach(s => { s.textContent = new Date()
 function aplicarVersaoServidor() {
   const v3 = servidorNaVersao('3.0');
   document.querySelectorAll('.soV3').forEach(el => { el.hidden = !v3; });
+  document.querySelectorAll('.soV4').forEach(el => { el.hidden = !servidorNaVersao('4.0'); });
+  atualizarCartao();
   if (!v3 && $('fDias').value === 'livre') $('fDias').value = '30';
 }
 
@@ -2305,6 +2498,7 @@ function filtrosNotas() {
 $('tiposNota').innerHTML = Object.keys(DICAS_CAT).map(k => '<button type="button" role="radio" aria-checked="false" data-tipo="' + k + '"><span class="ponto" style="background:' + CORES_CAT[k] + '"></span>' + esc(NOMES_CAT[k].replace(' (serviços e insumos)', '')) + '</button>').join('');
 function escolherTipo(k) {
   estado.tipoNota = k || '';
+  if ($('maisResumo')) atualizarCartao();
   $('tiposNota').querySelectorAll('button').forEach(b => { b.classList.toggle('sel', b.dataset.tipo === estado.tipoNota); b.setAttribute('aria-checked', b.dataset.tipo === estado.tipoNota); });
 }
 $('tiposNota').addEventListener('click', e => {
