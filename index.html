@@ -382,6 +382,56 @@
   .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--ink); color: var(--bg);
     padding: 10px 16px; border-radius: 10px; font-weight: 500; z-index: 20; max-width: calc(100% - 32px); }
   .vazio { padding: 20px; text-align: center; color: var(--muted); }
+
+  /* v5.0 */
+  .pvInfo { display: grid; gap: 4px; font-size: 13.5px; }
+  .pvInfo .pvForn { font-weight: 700; font-size: 15px; }
+  .pvInfo .ok { color: var(--accent); font-weight: 600; }
+  .semBoleto { display: grid; gap: 6px; }
+  .semBoleto .opcoesSB { display: flex; gap: 6px; flex-wrap: wrap; }
+  .semBoleto button { border-radius: 999px; padding: 7px 12px; font-size: 13.5px; }
+  .semBoleto button.sel { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; outline: 2px solid var(--accent); }
+  .semBoleto.pedindo { padding: 8px; border-radius: 10px; outline: 2px solid var(--warn); background: var(--warn-soft); }
+  .valorNota { display: grid; grid-template-columns: minmax(0, 220px) 1fr; gap: 8px; align-items: end; }
+  @media (max-width: 520px) { .valorNota { grid-template-columns: 1fr; } }
+  .fila { display: grid; gap: 6px; }
+  .fila .falha { display: flex; gap: 8px; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; background: var(--bad-soft); color: var(--bad); font-size: 13.5px; }
+  .fila .falha button { flex: none; padding: 4px 10px; }
+  .fila .enviando { font-size: 13px; color: var(--muted); }
+  tr.naFila td { opacity: .75; }
+
+  .alarme { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; background: rgba(120, 0, 0, .92); color: #fff; text-align: center; }
+  .alarme.outra { background: rgba(140, 70, 0, .94); }
+  .alarme .caixa { max-width: 560px; display: grid; gap: 14px; justify-items: center; }
+  .alarme .icone { font-size: 64px; line-height: 1; animation: pulsa 0.8s ease-in-out infinite; }
+  .alarme h2 { font-size: clamp(22px, 6vw, 32px); line-height: 1.2; letter-spacing: .01em; }
+  .alarme p { margin: 0; font-size: 16px; opacity: .95; }
+  .alarme .nota { font-family: var(--mono); font-size: 14px; opacity: .85; }
+  .alarme button { background: #fff; color: #7a0000; border: 0; font-weight: 800; font-size: 17px; padding: 14px 34px; border-radius: 12px; }
+  @keyframes pulsa { 50% { transform: scale(1.15); } }
+  @media (prefers-reduced-motion: reduce) { .alarme .icone { animation: none; } }
+
+  .cdStatus { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .cdStatus button { text-align: left; display: grid; gap: 2px; padding: 12px 14px; }
+  .cdStatus button b { font-size: 22px; font-variant-numeric: tabular-nums; }
+  .cdStatus button span { font-size: 12px; color: var(--muted); }
+  .cdStatus button.sel { border-color: var(--accent); outline: 2px solid var(--accent); }
+  .cdAdd { display: grid; grid-template-columns: 1fr 90px auto; gap: 8px; }
+  .cdItem { display: grid; grid-template-columns: minmax(0, 1fr) 90px auto; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+  .cdItem .cod { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+  .cdItem input { padding: 7px 9px; }
+  .cdItem button { padding: 6px 10px; }
+  .pedido { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; }
+  .pedido .pedTopo { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .pedido details summary { cursor: pointer; font-size: 13.5px; color: var(--accent); }
+  .pedido table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .pedido td { padding: 4px 6px; border-top: 1px solid var(--line); }
+  .cpResumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+  .cpResumo div { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; }
+  .cpResumo b { font-size: 20px; font-variant-numeric: tabular-nums; }
+  .cpResumo span { font-size: 12px; color: var(--muted); }
+  .protocolo { font-family: var(--mono); font-weight: 700; font-size: 15px; }
+  .confObs { font-size: 13px; }
 </style>
 </head>
 <body>
@@ -495,6 +545,7 @@
             <button type="button" class="copiar" id="btDescartar">Descartar</button>
           </div>
           <div class="chaveFmt" id="pvChave"></div>
+          <div class="pvInfo soV5" id="pvInfo"></div>
         </div>
 
         <div id="boxBoletos" class="boletos" hidden>
@@ -515,6 +566,18 @@
             <label>Vencimento<input type="date" id="bmVenc"></label>
             <label>Valor (R$)<input id="bmValor" inputmode="decimal" autocomplete="off" placeholder="0,00"></label>
             <button type="button" id="bmAdd" class="primario">Adicionar boleto</button>
+          </div>
+          <div id="semBoletoBox" class="semBoleto">
+            <div class="muted" style="font-size:13px">Sem boleto? Informe o motivo:</div>
+            <div class="opcoesSB" role="radiogroup" aria-label="Motivo de não ter boleto">
+              <button type="button" data-sb="SEM_MAOS" role="radio">Não tenho o boleto em mãos</button>
+              <button type="button" data-sb="A_VISTA" role="radio">Pago à vista</button>
+              <button type="button" data-sb="BONIFICACAO" role="radio">Nota de bonificação</button>
+            </div>
+          </div>
+          <div id="valorNotaBox" class="valorNota">
+            <label>Valor total da nota (opcional)<input id="valorNota" inputmode="decimal" autocomplete="off" placeholder="0,00"></label>
+            <div id="confrontoMsg" class="confObs"></div>
           </div>
         </div>
 
@@ -544,15 +607,74 @@
           <button id="btRegistrar" class="primario registrar">Registrar recebimento<span class="atalho">Enter</span></button>
         </div>
         <div id="msgBip" class="aviso" hidden></div>
+        <div id="filaBox" class="fila" hidden></div>
       </div>
 
       <div class="card">
-        <h2>Últimos registros da loja</h2>
+        <div class="detTopo"><h2>Últimos registros da loja</h2><button type="button" class="link soV5" data-ir-aba="comprovante">Comprovante de envio</button></div>
         <div class="tabela"><table class="resp recolhido" id="tabUltimas">
           <thead><tr><th>Quando</th><th>Nota</th><th>Fornecedor</th><th>Boletos</th><th>Situação</th><th>Conferência</th><th>Analista</th></tr></thead>
+          <tbody id="tbFila"></tbody>
           <tbody id="tbUltimas"></tbody>
         </table></div>
         <button type="button" id="btMaisUltimas" class="link soCelular" style="justify-self:start">Ver mais registros</button>
+      </div>
+    </div>
+
+    <!-- Comprovante de envio -->
+    <div id="aba-comprovante" class="aba" hidden>
+      <div class="card">
+        <div><h2>Comprovante de envio das notas</h2>
+          <div class="muted" style="font-size:13px">Lista das notas que você registrou e que foram enviadas para a analista fiscal, com número de protocolo. Baixe em PDF ou compartilhe.</div></div>
+        <div class="linha">
+          <label>De<input type="date" id="cpIni"></label>
+          <label>Até<input type="date" id="cpFim"></label>
+          <label id="lblCpEscopo">Notas<select id="cpEscopo"><option value="eu">Registradas por mim</option><option value="loja">Toda a loja</option></select></label>
+          <button type="button" id="btCpVer" class="primario" style="flex:0 0 auto">Ver</button>
+        </div>
+        <div id="cpCab"></div>
+        <div class="tabela"><table class="resp" id="tabCp">
+          <thead><tr><th>Registrada</th><th>Nota</th><th>Fornecedor</th><th>Situação</th><th>Boletos</th><th>Analista</th></tr></thead>
+          <tbody id="tbCp"></tbody>
+        </table></div>
+        <div class="detAcoes"><button type="button" id="btCpPdf" class="primario">Baixar PDF</button><button type="button" id="btCpShare">Compartilhar</button></div>
+        <div id="msgCp" class="aviso" hidden></div>
+      </div>
+    </div>
+
+    <!-- Centro de distribuição -->
+    <div id="aba-cd" class="aba" hidden>
+      <div class="cdStatus" id="cdStatus"></div>
+      <div class="card" id="cdNovo">
+        <div class="detTopo"><div><h2>Novo pedido de transferência</h2>
+          <div class="muted" style="font-size:13px">Leia o código de barras dos produtos (ou digite o código interno). O pedido vai para <b>Falta emitir nota</b>.</div></div>
+          <button type="button" id="cdNovoFechar" class="copiar" hidden>Fechar</button></div>
+        <div class="linha">
+          <label>Sai da loja (origem)<select id="cdOrigem"></select></label>
+          <label>Vai para a loja (destino)<select id="cdDestino"></select></label>
+        </div>
+        <div id="cdCamPainel" class="camPainel" hidden>
+          <video id="cdVideo" playsinline muted></video>
+          <div class="camMira"></div>
+          <div class="camEstado" id="cdCamEstado">Aponte para o código de barras do produto</div>
+          <button type="button" id="cdCamFechar" class="camFechar" aria-label="Fechar câmera">✕</button>
+        </div>
+        <button type="button" id="cdCam" class="btCamera primario">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h3l2-3h6l2 3h3v13H4z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span id="cdCamTxt">Ler produtos com a câmera</span></button>
+        <div class="cdAdd">
+          <input id="cdCodigo" autocomplete="off" placeholder="Código de barras ou código interno" aria-label="Código do produto">
+          <input id="cdQtd" inputmode="decimal" autocomplete="off" value="1" aria-label="Quantidade">
+          <button type="button" id="cdAddBt" class="primario">Incluir</button>
+        </div>
+        <div id="cdItens"></div>
+        <label>Observação<textarea id="cdObs" rows="2" maxlength="500" placeholder="Ex.: mandar no caminhão de amanhã"></textarea></label>
+        <div class="detAcoes"><button type="button" id="cdEnviar" class="primario">Enviar pedido</button><button type="button" id="cdLimpar">Limpar</button></div>
+        <div id="msgCd" class="aviso" hidden></div>
+      </div>
+      <div class="card">
+        <div class="detTopo"><h2 id="cdListaTitulo">Pedidos</h2><button type="button" id="cdAtualizar" class="copiar">Atualizar</button></div>
+        <div id="cdLista" style="display:grid;gap:10px"></div>
       </div>
     </div>
 
@@ -564,7 +686,7 @@
           <label>Loja<select id="fLoja"></select></label>
           <label>Lançamento<select id="fLanc"><option value="PENDENTE">A lançar</option><option value="LANCADA">Lançadas</option><option value="">Todas</option></select></label>
           <label>Situação<select id="fSit"><option value="">Todas</option><option value="OK">Chegou OK</option><option value="DIVERGENCIA">Divergência</option><option value="RECUSADA">Recusada</option></select></label>
-          <label>Conferência<select id="fVal"><option value="">Todas</option><option value="CONFERIDA">Loja certa</option><option value="AGUARDANDO">Aguardando Sysmo</option><option value="DESTINO_ERRADO">Loja errada</option></select></label>
+          <label>Conferência<select id="fVal"><option value="">Todas</option><option value="CONFERIDA">Loja certa</option><option value="AGUARDANDO">Aguardando Sysmo</option><option value="DESTINO_ERRADO">Loja errada</option><option value="FIN_DIV" class="soV5">Boleto diverge da nota</option><option value="FIN_PEND" class="soV5">Boleto não estava em mãos</option></select></label>
           <label>Período<select id="fDias"><option value="7">7 dias</option><option value="30" selected>30 dias</option><option value="90">90 dias</option><option value="0">Tudo</option><option value="livre" class="soV3">De… até…</option></select></label>
           <label id="lblFIni" hidden>De<input type="date" id="fIni"></label>
           <label id="lblFFim" hidden>Até<input type="date" id="fFim"></label>
@@ -749,6 +871,16 @@
         <div><button id="btAtalho" class="primario">Salvar</button></div>
         <div id="msgAtalho" class="aviso" hidden></div>
       </div>
+
+      <div class="card soV5" style="border-color:var(--bad)">
+        <div><h2>Apagar dados de teste</h2>
+          <div class="muted" style="font-size:13px">Apaga <b>todas</b> as notas, boletos, avaliações e pedidos do centro de distribuição. Usuários, lojas, fornecedores e configurações continuam. Antes de apagar, o app faz um backup completo no Drive. Para apagar uma nota só, abra os detalhes dela.</div></div>
+        <div class="linha" style="align-items:end">
+          <label style="flex:1 1 200px">Digite APAGAR para confirmar<input id="limparConf" autocomplete="off" placeholder="APAGAR"></label>
+          <button type="button" id="btLimpar" style="flex:0 0 auto;background:var(--bad);color:#fff;border-color:var(--bad)">Apagar dados de teste</button>
+        </div>
+        <div id="msgLimpar" class="aviso" hidden></div>
+      </div>
     </div>
 
     <div id="aba-conta" class="aba" hidden>
@@ -904,6 +1036,15 @@
 </div>
 
 <div id="toast" class="toast" hidden></div>
+<div id="alarme" class="alarme" hidden role="alertdialog" aria-modal="true" aria-labelledby="alarmeTitulo">
+  <div class="caixa">
+    <div class="icone" aria-hidden="true">⛔</div>
+    <h2 id="alarmeTitulo"></h2>
+    <p id="alarmeTexto"></p>
+    <div class="nota" id="alarmeNota"></div>
+    <button type="button" id="alarmeOk">ENTENDI</button>
+  </div>
+</div>
 
 <script>
 /* ───────── Utilidades ───────── */
@@ -918,7 +1059,8 @@ const guardar = {
   set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} },
 };
 
-let estado = { token: guardar.get('nfe_token'), ctx: null, situacao: 'OK', notaPend: '', boletosPend: [], ultimaNota: null, detId: null };
+let estado = { token: guardar.get('nfe_token'), ctx: null, situacao: 'OK', notaPend: '', boletosPend: [], ultimaNota: null, detId: null,
+  semBoleto: '', infoNota: null };
 
 // Dentro do Google (Apps Script) existe google.script.run; no app instalável, a tela fala com o servidor por fetch.
 const MODO_SITE = !(window.google && google.script && google.script.run);
@@ -1043,6 +1185,18 @@ function classificarCodigo(entrada) {
   if (b) return { tipo: 'erro', erro: b.erro };
   return null;
 }
+/** Código de produto lido pela câmera: EAN/UPC com dígito verificador certo, ou código interno (letras e números). */
+function eanValido(d) {
+  if (!/^\d{8}$|^\d{12,14}$/.test(d)) return false;
+  let soma = 0;
+  for (let i = d.length - 2, p = 3; i >= 0; i--, p = p === 3 ? 1 : 3) soma += Number(d[i]) * p;
+  return (10 - (soma % 10)) % 10 === Number(d[d.length - 1]);
+}
+function codigoProduto(t) {
+  const s = String(t || '').trim();
+  if (/^\d+$/.test(s)) return (s.length >= 8 && s.length <= 14 && eanValido(s)) || (s.length > 0 && s.length < 8) ? s : null;
+  return /^[A-Za-z0-9.\-\/]{1,40}$/.test(s) ? s : null;
+}
 const dinheiro = v => (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const diaBr = s => { const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] + '/' + m[1] : ''; };
 
@@ -1052,49 +1206,59 @@ const chip = (mapa, k) => { const v = mapa[k] || [k, 'neutro']; return '<span cl
 
 /* ───────── Leitura do código de barras pela câmera ───────── */
 const Leitor = (() => {
-  let leitorZx = null;
-  let detector = null;
+  // Dois modos: 'nota' (chave da NF-e em Code 128 e boleto em ITF) e 'produto' (EAN/UPC e código interno).
+  // Para cada modo há um leitor rápido (usado ao vivo) e um caprichado (fotos e, de vez em quando, ao vivo).
+  const leitores = {}, detectores = {};
+  let modo = 'nota';
 
-  function zx() {
-    if (leitorZx || !window.ZXing) return leitorZx;
+  function formatosZx(m) {
+    const F = ZXing.BarcodeFormat;
+    return m === 'produto' ? [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E, F.CODE_128, F.CODE_39, F.ITF] : [F.CODE_128, F.ITF];
+  }
+  function zx(forte) {
+    if (!window.ZXing) return null;
+    const k = modo + (forte ? '+' : '');
+    if (leitores[k]) return leitores[k];
     const dicas = new Map();
-    dicas.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.ITF]);
-    dicas.set(ZXing.DecodeHintType.TRY_HARDER, true);
-    leitorZx = new ZXing.MultiFormatReader();
-    leitorZx.setHints(dicas);
-    return leitorZx;
+    dicas.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formatosZx(modo));
+    if (forte) dicas.set(ZXing.DecodeHintType.TRY_HARDER, true);
+    const r = new ZXing.MultiFormatReader();
+    r.setHints(dicas);
+    return (leitores[k] = r);
   }
 
   async function nativo() {
-    if (detector !== null) return detector || null;
-    detector = false;
+    if (detectores[modo] !== undefined) return detectores[modo] || null;
+    detectores[modo] = false;
     try {
       if ('BarcodeDetector' in window) {
         const formatos = await BarcodeDetector.getSupportedFormats();
-        const usar = ['code_128', 'itf'].filter(f => formatos.indexOf(f) >= 0);
-        if (usar.length) detector = new BarcodeDetector({ formats: usar });
+        const quero = modo === 'produto' ? ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf'] : ['code_128', 'itf'];
+        const usar = quero.filter(f => formatos.indexOf(f) >= 0);
+        if (usar.length) detectores[modo] = new BarcodeDetector({ formats: usar });
       }
     } catch (e) {}
-    return detector || null;
+    return detectores[modo] || null;
   }
 
-  // Aceita a chave da NF-e (Code 128) e o código de barras do boleto (ITF).
+  // Nota: aceita a chave da NF-e e o código de barras do boleto. Produto: EAN válido ou código interno.
   const chaveValida = t => { const c = classificarCodigo(t); return c && (c.tipo === 'nfe' || c.tipo === 'boleto') ? digitos(t) : null; };
+  const aceitar = t => modo === 'produto' ? codigoProduto(t) : chaveValida(t);
 
-  /** Tenta ler uma chave de NF-e de um canvas. Devolve os 44 dígitos ou null. */
-  async function lerCanvas(cv) {
+  /** Tenta ler um código de um canvas. Devolve o código ou null. */
+  async function lerCanvas(cv, forte) {
     const det = await nativo();
     if (det) {
       try {
         const achados = await det.detect(cv);
-        for (const a of achados) { const c = chaveValida(a.rawValue); if (c) return c; }
+        for (const a of achados) { const c = aceitar(a.rawValue); if (c) return c; }
       } catch (e) {}
     }
-    const r = zx();
+    const r = zx(forte);
     if (!r) return null;
     try {
       const bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.HTMLCanvasElementLuminanceSource(cv)));
-      return chaveValida(r.decodeWithState(bmp).getText());
+      return aceitar(r.decodeWithState(bmp).getText());
     } catch (e) { return null; } finally { try { r.reset(); } catch (e) {} }
   }
 
@@ -1120,7 +1284,7 @@ const Leitor = (() => {
       });
       for (const largura of [1600, 2400, 1000]) {
         for (const giro of [false, true]) {
-          const c = await lerCanvas(desenhar(img, largura, giro));
+          const c = await lerCanvas(desenhar(img, largura, giro), true);
           if (c) return c;
         }
       }
@@ -1131,9 +1295,10 @@ const Leitor = (() => {
   /* Câmera ao vivo */
   let fluxo = null, timer = null, ocupadoQuadro = false;
 
-  /** Liga a câmera e chama aoLer(chave) a cada código lido. Enquanto pausar() for verdadeiro, não lê. */
-  async function ligar(video, aoLer, pausar) {
+  /** Liga a câmera e chama aoLer(codigo) a cada código lido. Enquanto pausar() for verdadeiro, não lê. */
+  async function ligar(video, aoLer, pausar, qualModo) {
     desligar();
+    modo = qualModo === 'produto' ? 'produto' : 'nota';
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('sem_suporte');
     fluxo = await navigator.mediaDevices.getUserMedia({
       audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
@@ -1148,6 +1313,8 @@ const Leitor = (() => {
     } catch (e) {}
     const cv = document.createElement('canvas');
     const ctx = cv.getContext('2d', { willReadFrequently: true });
+    let quadro = 0;
+    // Leitura rápida a cada ~110 ms; um quadro em cada cinco usa o leitor caprichado (código torto ou com pouca luz).
     timer = setInterval(async () => {
       if (ocupadoQuadro || !video.videoWidth || (pausar && pausar())) return;
       ocupadoQuadro = true;
@@ -1157,10 +1324,11 @@ const Leitor = (() => {
         const fh = Math.round(vh * 0.45), fy = Math.round((vh - fh) / 2);
         cv.width = Math.min(vw, 1600); cv.height = Math.round(fh * cv.width / vw);
         ctx.drawImage(video, 0, fy, vw, fh, 0, 0, cv.width, cv.height);
-        const c = await lerCanvas(cv);
+        quadro++;
+        const c = await lerCanvas(cv, quadro % 5 === 0);
         if (c && fluxo) aoLer(c);
       } finally { ocupadoQuadro = false; }
-    }, 220);
+    }, 110);
   }
 
   function desligar() {
@@ -1175,7 +1343,7 @@ const Leitor = (() => {
     try { await fluxo.getVideoTracks()[0].applyConstraints({ advanced: [{ torch: !!ligar }] }); return true; } catch (e) { return false; }
   }
 
-  return { lerFoto, ligar, desligar, ligado: () => !!fluxo, temLanterna, lanterna };
+  return { lerFoto, ligar, desligar, ligado: () => !!fluxo, modo: () => modo, temLanterna, lanterna };
 })();
 
 const toque = window.matchMedia && matchMedia('(pointer: coarse)').matches;
@@ -1217,9 +1385,9 @@ function camEstado(txt, lido) {
 }
 
 // Não lê enquanto registra ou com uma janela aberta. Com uma nota esperando, continua lendo os boletos.
-const camPausada = () => registrando || !$('modalAval').hidden || (!$('modalNota').hidden && !detCamLigada);
+const camPausada = () => !$('alarme').hidden || !$('modalAval').hidden || (!$('modalNota').hidden && !detCamLigada);
 
-function camIgnorar(chave) { if (chave) cam.ignorar[chave] = Date.now() + 10000; }
+function camIgnorar(chave, ms) { if (chave) cam.ignorar[chave] = Date.now() + (ms || 10000); }
 
 function camLeu(codigo) {
   if ((cam.ignorar[codigo] || 0) > Date.now()) return; // o mesmo papel continua na frente da câmera
@@ -1356,8 +1524,10 @@ $('btSair').addEventListener('click', () => { api('sair', estado.token).catch(()
 /* ───────── App ───────── */
 const ABAS = [
   { id: 'receber', nome: 'Receber notas', ok: c => !!c.usuario.loja_id },
+  { id: 'comprovante', nome: 'Comprovante', ok: c => !!c.usuario.loja_id && servidorNaVersao('5.0') },
   { id: 'notas', nome: 'Notas recebidas', ok: c => ['ANALISTA', 'ADMIN', 'GERENTE', 'FINANCEIRO'].indexOf(c.usuario.perfil) >= 0 },
   { id: 'relatorios', nome: 'Relatórios', ok: c => ['ANALISTA', 'ADMIN', 'GERENTE', 'FINANCEIRO'].indexOf(c.usuario.perfil) >= 0 },
+  { id: 'cd', nome: 'Centro de distribuição', ok: c => ['LOJA', 'GERENTE', 'ANALISTA', 'ADMIN'].indexOf(c.usuario.perfil) >= 0 && servidorNaVersao('5.0') },
   { id: 'faltam', nome: 'Não bipadas', ok: c => ['ANALISTA', 'ADMIN', 'GERENTE'].indexOf(c.usuario.perfil) >= 0 },
   { id: 'usuarios', nome: 'Usuários', ok: c => c.usuario.perfil === 'ADMIN' },
   { id: 'avaliacoes', nome: 'Avaliações', ok: c => c.usuario.perfil === 'ADMIN' },
@@ -1390,13 +1560,15 @@ function abrirApp(ctx) {
   if (ctx.usuario.perfil === 'GERENTE') $('fLoja').value = ctx.usuario.loja_id;
   if (ctx.usuario.perfil === 'FINANCEIRO') { relAtual = 'pagar'; irPara('relatorios'); } else irPara(visiveis[0].id);
   ligarSino();
+  desenharFila(); desenharFilaNaTabela(); processarFila();
 }
 
 function irPara(aba) {
+  if (aba !== 'cd' && cdCamLigada) pararCdCam();
   if (aba !== 'receber' && Leitor.ligado()) pararCamera(false);
   document.querySelectorAll('.aba').forEach(s => { s.hidden = s.id !== 'aba-' + aba; });
   $('abas').querySelectorAll('button').forEach(b => b.classList.toggle('ativa', b.dataset.aba === aba));
-  ({ receber: abrirReceber, notas: carregarNotas, faltam: carregarFaltam, usuarios: carregarUsuarios, avaliacoes: carregarAvaliacoes, config: carregarConfig, relatorios: () => abrirRelatorios() }[aba] || (() => {}))();
+  ({ receber: abrirReceber, notas: carregarNotas, faltam: carregarFaltam, usuarios: carregarUsuarios, avaliacoes: carregarAvaliacoes, config: carregarConfig, relatorios: () => abrirRelatorios(), comprovante: abrirComprovante, cd: abrirCD }[aba] || (() => {}))();
 }
 
 /* ───────── Receber ───────── */
@@ -1422,14 +1594,40 @@ function atualizarPrevia() {
   $('previa').hidden = !(info && info.ok);
   if (info && info.ok) {
     $('pvChave').textContent = fmtChave(info.chave);
-    $('pvEmit').textContent = info.cnpj;
+    const f = estado.infoNota && estado.infoNota.fornecedor;
+    $('pvEmit').textContent = f && f.nome ? f.nome + ' · ' + info.cnpj : info.cnpj;
     $('pvNum').textContent = 'Nota nº ' + info.numero + ' · série ' + info.serie;
     $('pvEmi').textContent = info.emissao;
   }
+  desenharInfoNota();
   desenharBoletos();
   atualizarCartao();
   return info;
 }
+
+/** Fornecedor, tipo automático, valor do XML e conferência do destinatário, vindos do servidor (infoNota). */
+function desenharInfoNota() {
+  const el = $('pvInfo');
+  if (!estado.notaPend || !servidorNaVersao('5.0')) { el.innerHTML = ''; return; }
+  const i = estado.infoNota;
+  if (!i) { el.innerHTML = '<span class="muted">Buscando o fornecedor…</span>'; return; }
+  const linhas = [];
+  if (i.fornecedor && i.fornecedor.nome) linhas.push('<span class="pvForn">' + esc(i.fornecedor.nome) + '</span>' + (i.fornecedor.cidade ? '<span class="muted">' + esc(i.fornecedor.cidade) + '</span>' : ''));
+  const tipo = estado.tipoNota || i.categoriaSugerida || 'REVENDA';
+  linhas.push('<span>Tipo: <b>' + esc(nomeCat(tipo).replace(' (serviços e insumos)', '')) + '</b> ' +
+    (estado.tipoNota ? '(escolhido)' : '<span class="muted">(automático' + (i.categoriaHabitual ? ', como nas notas anteriores deste fornecedor' : '') + ')</span>') +
+    ' · <button type="button" class="link" id="pvTrocar">trocar</button></span>');
+  if (i.xml && i.xml.valorTotal) linhas.push('<span>Valor da nota: <b>' + dinheiro(i.xml.valorTotal) + '</b>' +
+    (i.xml.duplicatas && i.xml.duplicatas.length ? ' · ' + i.xml.duplicatas.length + (i.xml.duplicatas.length === 1 ? ' parcela: ' : ' parcelas: ') + i.xml.duplicatas.map(d => diaBr(d.vencimento).slice(0, 5) + ' ' + dinheiro(d.valor)).join(', ') : ' · à vista ou sem parcelas no XML') + '</span>');
+  if (i.destinoConferido) linhas.push('<span class="ok">✓ Nota emitida para ' + esc(i.lojaNome) + ' (conferida)</span>');
+  else if (i.cnpjEsperado) linhas.push('<span class="muted">Confira no DANFE: o destinatário deve ser o CNPJ <b class="mono">' + esc(i.cnpjEsperado) + '</b> (' + esc(i.lojaNome) + ').</span>');
+  el.innerHTML = linhas.join('');
+}
+$('pvInfo').addEventListener('click', e => {
+  if (e.target.id !== 'pvTrocar') return;
+  $('maisOpcoes').open = true;
+  $('maisOpcoes').scrollIntoView({ block: 'center', behavior: 'smooth' });
+});
 
 /** Trata um código lido pela câmera, pela foto, pelo leitor USB ou digitado: nota fiscal ou boleto. */
 function processarCodigo(entrada) {
@@ -1439,17 +1637,33 @@ function processarCodigo(entrada) {
   try { navigator.vibrate && navigator.vibrate(80); } catch (e) {}
   if (c.tipo === 'boleto') { adicionarBoletoLido(c.info); return true; }
   const chave = c.info.chave;
+  if (notasBloqueadas[chave]) { alarme(notasBloqueadas[chave], c.info.numero); return true; }
   if (estado.notaPend && estado.notaPend !== chave) {
     aviso($('msgBip'), 'Registre a nota nº ' + analisarChave(estado.notaPend).numero + ' antes de bipar outra (ou toque em Descartar).', 'warn');
     bip(false);
     return true;
   }
-  estado.notaPend = chave;
+  if (estado.notaPend === chave) return true;
+  // A nota anterior ficou sem boleto e sem motivo: pede antes de passar para a próxima.
+  const u = ultimaNotaAtiva();
+  if (u && u.chave !== chave && precisaBoleto(u)) {
+    pedirBoletoDa(u, chave);
+    return true;
+  }
+  if (jaRegistradaAqui(chave)) {
+    bip(false); aviso($('msgBip'), 'A nota nº ' + c.info.numero + ' já foi registrada agora há pouco neste aparelho.', 'warn');
+    return true;
+  }
+  estado.notaPend = chave; estado.semBoleto = ''; estado.infoNota = infoCache[chave] || null;
+  $('valorNota').value = '';
+  buscarInfoNota(chave);
   atualizarPrevia();
-  if ($('autoOk').checked && estado.situacao === 'OK') { registrar(); return true; }
+  if ($('autoOk').checked && estado.situacao === 'OK') { registrar(true); return true; }
   bip(true);
   if (Leitor.ligado()) camEstado('Nota lida ✓  Agora aponte para os boletos', true);
-  aviso($('msgBip'), 'Nota lida. Bipe agora os boletos dela (se houver), confira a situação e toque em Registrar recebimento.', 'info');
+  aviso($('msgBip'), servidorNaVersao('5.0')
+    ? 'Nota lida. Leia agora o boleto. Se não tiver boleto, toque no motivo: não tenho em mãos, pago à vista ou bonificação.'
+    : 'Nota lida. Bipe agora os boletos dela (se houver), confira a situação e toque em Registrar recebimento.', 'info');
   return true;
 }
 
@@ -1459,14 +1673,15 @@ function atualizarCartao() {
   $('cardBip').classList.toggle('rapido', $('autoOk').checked);
   const extras = [];
   if (estado.tipoNota) extras.push(nomeCat(estado.tipoNota).replace(' (serviços e insumos)', ''));
+  else if (servidorNaVersao('5.0')) extras.push(nomeCat((estado.infoNota && estado.infoNota.categoriaSugerida) || 'REVENDA').replace(' (serviços e insumos)', '') + ' (automático)');
   if ($('urgente').checked) extras.push('URGENTE');
   $('maisResumo').textContent = extras.length ? '· ' + extras.join(' · ') : '· tipo da nota e urgência';
 }
 $('urgente').addEventListener('change', atualizarCartao);
 
 function descartarNota() {
-  estado.notaPend = ''; estado.boletosPend = [];
-  $('chave').value = ''; $('obs').value = '';
+  estado.notaPend = ''; estado.boletosPend = []; estado.semBoleto = ''; estado.infoNota = null;
+  $('chave').value = ''; $('obs').value = ''; $('valorNota').value = '';
   atualizarPrevia(); escolherSituacao('OK'); aviso($('msgBip'), ''); focarChave();
 }
 
@@ -1498,6 +1713,19 @@ async function adicionarBoletoLido(b) {
   }
   const u = ultimaNotaAtiva();
   if (!u) { bip(false); aviso($('msgBip'), 'Bipe primeiro a nota fiscal e, logo depois, os boletos dela.', 'warn'); return; }
+  if ((u.boletos || []).some(x => mesmoBoleto(x, b))) { bip(false); aviso($('msgBip'), 'Este boleto já foi informado para a nota nº ' + u.numero + '.', 'warn'); return; }
+  if (u.chave) {
+    // Versão 5.0: vai pela fila de envio, sem esperar o servidor.
+    const novo = Object.assign({ local: true }, b);
+    u.boletos = (u.boletos || []).concat([novo]).sort((x, y) => (x.vencimento || '9').localeCompare(y.vencimento || '9'));
+    if (u.semBoleto === 'SEM_MAOS') u.semBoleto = '';
+    u.quando = Date.now();
+    filaBoleto(u, b);
+    bip(true); desenharBoletos(); desenharFilaNaTabela();
+    aviso($('msgBip'), 'Boleto adicionado à nota nº ' + u.numero + ': ' + textoBoleto(b) + '.', 'ok');
+    if (Leitor.ligado()) camEstado('Boleto lido ✓  ' + dinheiro(b.valor), true);
+    return;
+  }
   try {
     u.boletos = await api('adicionarBoleto', estado.token, u.id, paraServidor(b));
     u.quando = Date.now();
@@ -1520,9 +1748,56 @@ function desenharBoletos() {
   $('listaBoletos').innerHTML = lista.length ? lista.map((b, i) =>
     '<div class="boleto"><span class="mono">' + esc(b.parcela) + '</span><span>' + (b.vencimento ? 'vence ' + diaBr(b.vencimento) : 'sem vencimento') + '</span>' +
     '<b>' + dinheiro(b.valor) + '</b><span class="muted">' + esc(b.manual || !b.barras && !b.linha ? 'digitado à mão' : b.banco) + '</span>' +
-    '<button type="button" class="copiar" aria-label="Remover boleto" data-rem-boleto="' + (pend ? 'p' + i : esc(b.id)) + '">✕</button></div>').join('')
+    '<button type="button" class="copiar" aria-label="Remover boleto" data-rem-boleto="' + (pend ? 'p' + i : (b.id ? esc(b.id) : 'l' + i)) + '">✕</button></div>').join('')
     : '<div class="muted" style="font-size:13px">Nenhum boleto ainda.</div>';
+  // Motivo de não ter boleto (5.0)
+  const sb = pend ? estado.semBoleto : (u.semBoleto || '');
+  $('semBoletoBox').hidden = !servidorNaVersao('5.0') || lista.length > 0;
+  $('semBoletoBox').querySelectorAll('[data-sb]').forEach(bt => { bt.classList.toggle('sel', bt.dataset.sb === sb); bt.setAttribute('aria-checked', bt.dataset.sb === sb); });
+  if (lista.length || sb) $('semBoletoBox').classList.remove('pedindo');
+  $('valorNotaBox').hidden = !servidorNaVersao('5.0') || !pend;
+  desenharConfronto(lista, pend ? null : u);
 }
+
+/** Compara, na hora, a soma dos boletos com o valor da nota (do XML ou digitado). */
+function desenharConfronto(lista, u) {
+  const el = $('confrontoMsg');
+  if (!servidorNaVersao('5.0')) { el.innerHTML = ''; return; }
+  if (u) {
+    el.innerHTML = u.confObs ? '<div class="aviso ' + (u.conf === 'DIVERGENTE' ? 'warn' : 'info') + '">' + esc(u.confObs) + '</div>' : '';
+    if (u.confObs) $('valorNotaBox').hidden = false;
+    return;
+  }
+  const xml = estado.infoNota && estado.infoNota.xml;
+  const lblValor = $('valorNota').closest('label');
+  lblValor.hidden = !!(xml && xml.valorTotal);
+  const valorNota = (xml && xml.valorTotal) || lerValor($('valorNota').value);
+  const total = lista.reduce((s, b) => s + (Number(b.valor) || 0), 0);
+  const avisos = [];
+  if (lista.length && valorNota && Math.abs(total - valorNota) > 0.10) avisos.push('Os boletos somam ' + dinheiro(total) + ' e a nota ' + dinheiro(valorNota) + ' (diferença de ' + dinheiro(Math.abs(total - valorNota)) + ').');
+  const dup = xml && xml.duplicatas || [];
+  if (lista.length && dup.length && dup.length !== lista.length) avisos.push('A nota prevê ' + dup.length + (dup.length === 1 ? ' parcela' : ' parcelas') + ' e foram lidos ' + lista.length + (lista.length === 1 ? ' boleto.' : ' boletos.'));
+  else if (lista.length && dup.length) {
+    const v1 = dup.map(d => d.vencimento).sort(), v2 = lista.map(b => b.vencimento).sort();
+    if (v1.some((v, k) => v !== v2[k])) avisos.push('Vencimentos diferentes da nota: ' + v1.map(diaBr).join(', ') + '.');
+  }
+  el.innerHTML = avisos.length ? '<div class="aviso warn">Atenção: ' + esc(avisos.join(' ')) + ' A analista será avisada; se souber o motivo, escreva na observação (Divergência).</div>'
+    : (lista.length && valorNota ? '<div class="aviso ok">Boletos conferem com o valor da nota ✓</div>' : '');
+}
+$('valorNota').addEventListener('input', () => desenharConfronto(estado.boletosPend, null));
+$('semBoletoBox').addEventListener('click', e => {
+  const bt = e.target.closest('[data-sb]');
+  if (!bt) return;
+  const k = bt.dataset.sb;
+  if (estado.notaPend) { estado.semBoleto = estado.semBoleto === k ? '' : k; desenharBoletos(); focarChave(); return; }
+  const u = ultimaNotaAtiva();
+  if (!u || !u.chave) return;
+  u.semBoleto = u.semBoleto === k ? '' : k;
+  filaInformar(u, { sem_boleto: u.semBoleto });
+  desenharBoletos();
+  aviso($('msgBip'), u.semBoleto ? 'Nota nº ' + u.numero + ': ' + NOMES_SEM_BOLETO[u.semBoleto] + '. Pode ler a próxima nota.' : 'Motivo retirado.', 'ok');
+  focarChave();
+});
 
 $('listaBoletos').addEventListener('click', e => {
   const bt = e.target.closest('[data-rem-boleto]');
@@ -1531,8 +1806,15 @@ $('listaBoletos').addEventListener('click', e => {
   if (ref[0] === 'p') { estado.boletosPend.splice(Number(ref.slice(1)), 1); desenharBoletos(); focarChave(); return; }
   const u = ultimaNotaAtiva();
   if (!u) return;
+  if (ref[0] === 'l') {
+    // Boleto ainda na fila de envio: tira da fila.
+    const b = u.boletos[Number(ref.slice(1))];
+    if (b && filaTirarBoleto(u, b)) { u.boletos.splice(Number(ref.slice(1)), 1); desenharBoletos(); toast('Boleto removido'); }
+    else toast('Aguarde o envio deste boleto para removê-lo.');
+    return;
+  }
   ocupado(bt, async () => {
-    try { u.boletos = await api('removerBoleto', estado.token, ref); desenharBoletos(); carregarUltimas(); toast('Boleto removido'); }
+    try { u.boletos = await api('removerBoleto', estado.token, ref); u.confObs = ''; desenharBoletos(); carregarUltimas(); toast('Boleto removido'); }
     catch (err) { toast(err.message); }
   });
 });
@@ -1591,11 +1873,59 @@ $('chave').addEventListener('keydown', e => {
   }
   if (estado.notaPend && (!$('autoOk').checked || estado.situacao !== 'OK')) registrar();
 });
+$('valorNota').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); registrar(); } });
 $('autoOk').addEventListener('change', () => { guardar.set('nfe_auto_ok', $('autoOk').checked ? '1' : null); atualizarCartao(); toast($('autoOk').checked ? 'Modo rápido ligado' : 'Modo rápido desligado'); });
-$('btRegistrar').addEventListener('click', registrar);
+$('btRegistrar').addEventListener('click', () => registrar());
 
 let registrando = false;
-async function registrar() {
+async function registrar(automatico) {
+  if (!servidorNaVersao('5.0')) return registrarAntigo();
+  const info = analisarChave(estado.notaPend || $('chave').value);
+  if (!info.ok) { aviso($('msgBip'), estado.notaPend || digitos($('chave').value) ? info.erro : 'Bipe a nota fiscal primeiro.', 'bad'); bip(false); focarChave(); return; }
+  if (notasBloqueadas[info.chave]) { alarme(notasBloqueadas[info.chave], info.numero); return; }
+  // Nota emitida por uma loja da rede (transferência) não tem boleto.
+  const transf = (estado.infoNota && estado.infoNota.transferencia) || (estado.ctx.lojas || []).some(l => digitos(l.cnpj) && digitos(l.cnpj) === digitos(info.cnpj));
+  if (!automatico && !estado.boletosPend.length && !estado.semBoleto && !transf && estado.situacao !== 'RECUSADA') {
+    bip(false);
+    $('semBoletoBox').classList.add('pedindo');
+    $('semBoletoBox').scrollIntoView({ block: 'center', behavior: 'smooth' });
+    aviso($('msgBip'), 'Leia o boleto desta nota. Se não tiver boleto, toque no motivo: não tenho o boleto em mãos, pago à vista ou nota de bonificação.', 'warn');
+    return;
+  }
+  if (estado.situacao === 'DIVERGENCIA' && !$('tipoDiv').value) { aviso($('msgBip'), 'Escolha o tipo de divergência.', 'bad'); return; }
+  if ((estado.situacao === 'RECUSADA' || $('tipoDiv').value === 'Outro' && estado.situacao === 'DIVERGENCIA') && !$('obs').value.trim()) {
+    aviso($('msgBip'), 'Escreva na observação o que aconteceu.', 'bad'); $('obs').focus(); return;
+  }
+  const xml = estado.infoNota && estado.infoNota.xml;
+  const valorDigitado = lerValor($('valorNota').value);
+  const dados = { chave: info.chave, situacao: estado.situacao, tipo: estado.situacao === 'DIVERGENCIA' ? $('tipoDiv').value : '', observacao: $('obs').value,
+    urgente: $('urgente').checked, boletos: estado.boletosPend.map(paraServidor), categoria: estado.tipoNota || '',
+    sem_boleto: estado.boletosPend.length ? '' : estado.semBoleto, valor_informado: !(xml && xml.valorTotal) && valorDigitado > 0 ? valorDigitado : '' };
+  const f = estado.infoNota && estado.infoNota.fornecedor;
+  estado.ultimaNota = { chave: info.chave, id: null, numero: info.numero, boletos: estado.boletosPend.map(b => Object.assign({ local: true }, b)),
+    semBoleto: dados.sem_boleto, transferencia: !!transf, situacao: estado.situacao, quando: Date.now(), conf: '', confObs: '' };
+  filaRegistrar(dados, { numero: info.numero, serie: info.serie, cnpj: info.cnpj, fornecedor: f && f.nome || '' });
+  // Confirmação na hora: o envio para o servidor continua em segundo plano.
+  bip(true);
+  const qtdBol = estado.boletosPend.length;
+  aviso($('msgBip'), 'Nota nº ' + info.numero + ' registrada ✓ ' + SIT[estado.situacao][0] +
+    (qtdBol ? ', com ' + qtdBol + (qtdBol === 1 ? ' boleto' : ' boletos') : (estado.semBoleto ? ' · ' + NOMES_SEM_BOLETO[estado.semBoleto] : '')) +
+    ($('urgente').checked ? ' — URGENTE' : '') + '. ' + (automatico ? 'Leia o boleto dela ou toque no motivo de não ter boleto.' : 'Pode ler a próxima nota.'),
+    $('urgente').checked ? 'warn' : (estado.situacao === 'OK' ? 'ok' : 'warn'));
+  $('urgente').checked = false; // a urgência e o tipo valem só para a nota que acabou de ser bipada
+  escolherTipo('');
+  camIgnorar(info.chave);
+  estado.notaPend = ''; estado.boletosPend = []; estado.semBoleto = ''; estado.infoNota = null;
+  $('chave').value = ''; $('obs').value = ''; $('valorNota').value = '';
+  escolherSituacao('OK');
+  atualizarPrevia();
+  if (Leitor.ligado()) camEstado(automatico ? 'Registrada ✓  Leia o boleto ou a próxima nota' : 'Registrada ✓  Leia a próxima nota', true);
+  desenharFilaNaTabela();
+  focarChave();
+}
+
+/** Servidor antigo (antes da 5.0): espera a resposta do Google. */
+async function registrarAntigo() {
   if (registrando) return;
   const info = analisarChave(estado.notaPend || $('chave').value);
   if (!info.ok) { aviso($('msgBip'), estado.notaPend || digitos($('chave').value) ? info.erro : 'Bipe a nota fiscal primeiro.', 'bad'); bip(false); focarChave(); return; }
@@ -1607,12 +1937,11 @@ async function registrar() {
     const r = await api('registrarNota', estado.token, { chave: info.chave, situacao: estado.situacao, tipo: $('tipoDiv').value, observacao: $('obs').value, urgente: $('urgente').checked, boletos, categoria: estado.tipoNota || '' });
     const ms = performance.now() - t0;
     bip(true);
-    aviso($('msgBip'), 'Registrada: nota ' + r.numero + ' do fornecedor ' + r.cnpjEmitente + ' — ' + SIT[r.situacao][0] +
+    aviso($('msgBip'), 'Registrada: nota ' + r.numero + ' do fornecedor ' + (r.fornecedorNome || r.cnpjEmitente) + ' — ' + SIT[r.situacao][0] +
       (boletos.length ? ', com ' + boletos.length + (boletos.length === 1 ? ' boleto' : ' boletos') : '') +
       (r.urgente ? ' — marcada como URGENTE, a analista foi avisada.' : '.') +
-      (r.validacao === 'AGUARDANDO' ? ' A loja de destino será conferida quando a nota chegar na Sysmo.' : '') +
       (boletos.length ? '' : ' Se houver boletos, bipe agora.'), r.urgente ? 'warn' : (r.situacao === 'OK' ? 'ok' : 'warn'));
-    $('urgente').checked = false; // a urgência e o tipo valem só para a nota que acabou de ser bipada
+    $('urgente').checked = false;
     escolherTipo('');
     camIgnorar(info.chave);
     estado.ultimaNota = { id: r.id, numero: r.numero, boletos: r.boletosLista || [], quando: Date.now() };
@@ -1626,7 +1955,6 @@ async function registrar() {
   } catch (err) {
     bip(false);
     aviso($('msgBip'), err.message, 'bad');
-    // Nota que nunca vai entrar (repetida ou de outra loja): libera para a próxima.
     if (/já foi registrada|OUTRA LOJA|Chave inválida/.test(err.message)) {
       camIgnorar(info.chave);
       estado.notaPend = ''; estado.boletosPend = []; atualizarPrevia();
@@ -1646,12 +1974,13 @@ async function carregarUltimas() {
   const tb = $('tbUltimas');
   try {
     const itens = await api('ultimasDaLoja', estado.token);
+    estado.ultimasChaves = itens.map(r => r.chave);
     $('btMaisUltimas').hidden = itens.length <= 5;
     tb.innerHTML = itens.length ? itens.map(r =>
       '<tr data-id="' + esc(r.id) + '"><td>' + esc(r.registradoEm) + '<span class="sub">' + esc(r.usuario) + '</span></td>' +
-      '<td class="mono">' + esc(r.numero) + '<span class="sub">série ' + esc(r.serie) + '</span></td>' +
-      '<td class="mono opc">' + esc(r.cnpjEmitente) + '</td>' +
-      '<td>' + resumoBoletosCel(r.boletos) + '</td>' +
+      '<td><span class="mono">' + esc(r.numero) + '</span><span class="sub">' + (r.fornecedorNome ? esc(r.fornecedorNome) : 'série ' + esc(r.serie)) + '</span></td>' +
+      '<td class="opc">' + (r.fornecedorNome ? esc(r.fornecedorNome) + '<span class="sub mono">' + esc(r.cnpjEmitente) + '</span>' : '<span class="mono">' + esc(r.cnpjEmitente) + '</span>') + '</td>' +
+      '<td>' + resumoBoletosCel(r.boletos) + chipsFinanceiro(r) + '</td>' +
       '<td>' + chip(SIT, r.situacao) + (r.tipo ? '<span class="sub">' + esc(r.tipo) + '</span>' : '') + (r.categoria ? '<span class="sub">' + esc(nomeCat(r.categoria)) + '</span>' : '') + '</td>' +
       '<td class="opc">' + chip(VAL, r.validacao) + '</td>' +
       '<td>' + (r.lancamento === 'LANCADA' ? '<span class="chip info">Lançada</span>' : '<span class="chip neutro">A lançar</span>') + '</td></tr>'
@@ -1677,8 +2006,8 @@ async function carregarNotas() {
       ['Divergências a tratar', s.divergencias, { fLanc: 'PENDENTE', fSit: 'DIVERGENCIA', fVal: '' }],
       ['Aguardando Sysmo', s.aguardando, { fLanc: '', fSit: '', fVal: 'AGUARDANDO' }],
       ['Bipadas na loja errada', s.destinoErrado, { fLanc: '', fSit: '', fVal: 'DESTINO_ERRADO' }],
-    ].map((c, i) => '<button data-i="' + i + '"' + (i === 0 && c[1] > 0 ? ' style="border-color:var(--bad)"' : '') + '><b' + (i === 0 && c[1] > 0 ? ' style="color:var(--bad)"' : '') + '>' + c[1] + '</b><span>' + c[0] + '</span></button>').join('');
-    const filtros = [{ fLanc: 'PENDENTE', fSit: '', fVal: '' }, { fLanc: 'PENDENTE', fSit: '', fVal: '' }, { fLanc: 'PENDENTE', fSit: 'DIVERGENCIA', fVal: '' }, { fLanc: '', fSit: '', fVal: 'AGUARDANDO' }, { fLanc: '', fSit: '', fVal: 'DESTINO_ERRADO' }];
+    ].concat(servidorNaVersao('5.0') ? [['Boleto × nota divergente', s.divFinanceira || 0], ['Boleto não estava em mãos', s.semBoletoEmMaos || 0]] : []).map((c, i) => '<button data-i="' + i + '"' + (i === 0 && c[1] > 0 ? ' style="border-color:var(--bad)"' : '') + '><b' + (i === 0 && c[1] > 0 ? ' style="color:var(--bad)"' : '') + '>' + c[1] + '</b><span>' + c[0] + '</span></button>').join('');
+    const filtros = [{ fLanc: 'PENDENTE', fSit: '', fVal: '' }, { fLanc: 'PENDENTE', fSit: '', fVal: '' }, { fLanc: 'PENDENTE', fSit: 'DIVERGENCIA', fVal: '' }, { fLanc: '', fSit: '', fVal: 'AGUARDANDO' }, { fLanc: '', fSit: '', fVal: 'DESTINO_ERRADO' }, { fLanc: '', fSit: '', fVal: 'FIN_DIV' }, { fLanc: '', fSit: '', fVal: 'FIN_PEND' }];
     $('resumo').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
       const f = filtros[b.dataset.i]; Object.keys(f).forEach(k => { $(k).value = f[k]; }); $('fDias').value = '0'; $('fDias').dispatchEvent(new Event('change')); carregarNotas();
     }));
@@ -1688,7 +2017,7 @@ async function carregarNotas() {
         (n.urgente && n.lancamento !== 'LANCADA' ? '<span class="chip urgente">URGENTE</span>' : '') + '</td>' +
       '<td>' + esc(n.loja) + '</td>' +
       '<td class="mono">' + esc(n.numero) + '/' + esc(n.serie) + '<span class="sub">' + (n.fornecedorNome ? esc(n.fornecedorNome) + ' · ' : '') + esc(n.cnpjEmitente) + '</span>' + (n.categoria && n.lancamento !== 'LANCADA' ? '<span class="sub">tipo: ' + esc(nomeCat(n.categoria)) + '</span>' : '') + '<button class="link" data-detalhes="' + esc(n.id) + '" style="font-size:12px">ver detalhes</button></td>' +
-      '<td>' + resumoBoletosCel(n.boletos) + '</td>' +
+      '<td>' + resumoBoletosCel(n.boletos) + chipsFinanceiro(n) + (n.confFinanceira === 'DIVERGENTE' ? '<span class="sub">' + esc(n.confObs.length > 140 ? n.confObs.slice(0, 140) + '…' : n.confObs) + '</span>' : '') + '</td>' +
       '<td><div class="chaveCel">' + esc(n.chave) + '</div><button class="copiar" data-copiar="' + esc(n.chave) + '">Copiar</button></td>' +
       '<td>' + chip(SIT, n.situacao) + (n.tipo ? '<span class="sub">' + esc(n.tipo) + '</span>' : '') + (n.observacao ? '<span class="sub">“' + esc(n.observacao) + '”</span>' : '') + '</td>' +
       '<td>' + chip(VAL, n.validacao) + (n.validacao === 'DESTINO_ERRADO' ? '<span class="sub">nota é do CNPJ ' + esc(n.cnpjDestinatario) + '</span>' : '') + '</td>' +
@@ -1947,11 +2276,11 @@ function desenharDetalhes(d) {
   const n = d.nota, x = d.xml, bol = d.boletos || [];
   const analista = !!d.podeLancar;
   $('tituloNota').textContent = 'Nota nº ' + n.numero + ' · série ' + n.serie;
-  $('subNota').textContent = (x && x.emitente ? x.emitente + ' · ' : '') + 'CNPJ ' + n.cnpjEmitente;
+  $('subNota').textContent = ((x && x.emitente) || n.fornecedorNome ? ((x && x.emitente) || n.fornecedorNome) + ' · ' : '') + 'CNPJ ' + n.cnpjEmitente;
   const campo = (rot, val) => '<div><span>' + rot + '</span>' + val + '</div>';
   const totalBol = bol.reduce((s, b) => s + b.valor, 0);
   let comparacao = '';
-  if (x && x.duplicatas.length) {
+  if (x && x.duplicatas.length && !n.confFinanceira) {
     const totalXml = x.duplicatas.reduce((s, p) => s + p.valor, 0);
     const confere = bol.length === x.duplicatas.length && Math.abs(totalBol - totalXml) < 0.01;
     comparacao = '<div class="aviso ' + (confere ? 'ok' : 'warn') + '">' + (confere
@@ -1964,11 +2293,13 @@ function desenharDetalhes(d) {
       (n.urgente && n.lancamento !== 'LANCADA' ? '<span class="chip urgente">URGENTE</span>' : '') + '</div>' +
     '<div class="detDados">' +
       campo('Chave de acesso', '<span class="mono chaveDet">' + esc(fmtChave(n.chave)) + '</span> <button class="copiar" data-copiar="' + esc(n.chave) + '">Copiar</button>') +
-      campo('Fornecedor', esc((x && x.emitente) || '') + '<span class="sub mono">' + esc(n.cnpjEmitente) + '</span>') +
+      campo('Fornecedor', esc(n.fornecedorNome || (x && x.emitente) || '') + '<span class="sub mono">' + esc(n.cnpjEmitente) + '</span>') +
       campo('Emissão', esc(x && x.emissao ? diaBr(x.emissao) : n.emissao)) +
       campo('Loja', esc(n.loja)) +
       campo('Recebida', esc(n.registradoEm) + '<span class="sub">por ' + esc(n.usuario) + '</span>') +
-      (n.categoria && n.lancamento !== 'LANCADA' ? campo('Tipo informado na bipagem', esc(nomeCat(n.categoria))) : '') +
+      (n.categoria && n.lancamento !== 'LANCADA' ? campo('Tipo da nota', esc(nomeCat(n.categoria))) : '') +
+      (n.semBoletoNome ? campo('Sem boleto', esc(n.semBoletoNome)) : '') +
+      (n.valorInformado ? campo('Valor informado pela loja', '<b>' + dinheiro(n.valorInformado) + '</b>') : '') +
       (n.tipo || n.observacao ? campo('Divergência', esc(n.tipo || '') + (n.observacao ? '<span class="sub">“' + esc(n.observacao) + '”</span>' : '')) : '') +
       (x ? campo('Valor da nota', '<b>' + dinheiro(x.valorTotal) + '</b><span class="sub">' + x.itens + (x.itens === 1 ? ' item' : ' itens') + '</span>') : '') +
       (n.lancamento === 'LANCADA' ? campo('Lançada', esc(n.lancadoEm) + '<span class="sub">por ' + esc(n.lancadoPor) + '</span>') : '') +
@@ -1982,6 +2313,12 @@ function desenharDetalhes(d) {
         '<td><button class="link" data-det-rem="' + esc(b.id) + '" style="font-size:12px">remover</button></td></tr>').join('') +
       '</tbody></table></div>' : '<div class="muted" style="font-size:13px">Nenhum boleto registrado para esta nota.</div>') +
     comparacao +
+    (n.confFinanceira === 'DIVERGENTE' ? '<div class="aviso warn"><b>Boletos × nota:</b> ' + esc(n.confObs) + '</div>'
+      : n.confFinanceira === 'PENDENTE' ? '<div class="aviso warn">' + esc(n.confObs) + '</div>'
+      : n.confFinanceira === 'OK' ? '<div class="aviso ok">Boletos conferem com a nota (valor e prazo).</div>' : '') +
+    (servidorNaVersao('5.0') ? '<div class="valorNota" style="grid-template-columns:1fr 1fr auto"><label>Valor total da nota (R$)<input id="detValorInf" inputmode="decimal" value="' + (n.valorInformado ? esc(String(n.valorInformado.toFixed(2)).replace('.', ',')) : '') + '" placeholder="0,00"></label>' +
+      '<label>Sem boleto<select id="detSemBol"><option value="">—</option>' + Object.keys(NOMES_SEM_BOLETO).map(k => '<option value="' + k + '"' + (n.semBoleto === k ? ' selected' : '') + '>' + esc(NOMES_SEM_BOLETO[k]) + '</option>').join('') + '</select></label>' +
+      '<button type="button" data-det-acao="informar">Salvar</button></div>' : '') +
     '<div class="bolAcoes"><button type="button" class="primario" data-det-acao="cam">Ler boleto com a câmera</button>' +
       (servidorNaVersao('4.0') ? '<button type="button" data-det-acao="manualAbrir">Sem código</button>' : '') + '</div>' +
     '<div id="detCamBox" class="camPainel" hidden><video id="detVideo" playsinline muted></video><div class="camMira"></div><div class="camEstado">Aponte para o código de barras do boleto</div>' +
@@ -2003,6 +2340,7 @@ function desenharDetalhes(d) {
     (analista ? '<div class="detAcoes" style="margin-top:6px">' + (n.lancamento === 'LANCADA'
       ? '<button type="button" data-det-acao="lancar">Corrigir categoria e valor</button><button type="button" data-det-acao="desfazer">Voltar para “a lançar”</button>'
       : '<button type="button" class="primario" data-det-acao="lancar">Marcar lançada</button>') + '</div>' : '') +
+    (d.podeExcluir ? '<div class="detAcoes" style="margin-top:6px;justify-content:flex-end"><button type="button" data-det-acao="excluir" style="color:var(--bad);border-color:var(--bad)">Excluir nota (administrador)</button></div>' : '') +
     '<div id="msgDet" class="aviso" hidden></div>';
 }
 
@@ -2057,6 +2395,17 @@ async function acaoDetalhe(acao, botao) {
         baixarArquivo(r.nome, r.base64, 'application/pdf', true); return;
       } else if (acao === 'lancar') {
         abrirLancamento(id); return;
+      } else if (acao === 'informar') {
+        const r = await api('informarNota', estado.token, id, { valor_informado: lerValor($('detValorInf').value) || '', sem_boleto: $('detSemBol').value });
+        toast(r.conf && r.conf.status === 'DIVERGENTE' ? 'Salvo. Atenção: boletos não conferem com a nota.' : 'Salvo');
+      } else if (acao === 'excluir') {
+        if (!confirm('Excluir esta nota e os boletos dela? Não dá para desfazer (fica registrado no Log).')) return;
+        await api('excluirNota', estado.token, id);
+        toast('Nota excluída');
+        fecharDetalhes();
+        if (!$('aba-notas').hidden) carregarNotas();
+        if (!$('aba-receber').hidden) carregarUltimas();
+        return;
       } else if (acao === 'desfazer') {
         await api('marcarLancada', estado.token, id, false);
         toast('Voltou para “a lançar”');
@@ -2108,9 +2457,9 @@ const resumoBoletosCel = b => b && b.qtd
 /* ───────── Perfis ───────── */
 const temPerfil = (...perfis) => !!estado.ctx && perfis.indexOf(estado.ctx.usuario.perfil) >= 0;
 const podeLancar = () => temPerfil('ANALISTA', 'ADMIN');
-const NOMES_CAT = { REVENDA: 'Mercadoria para revenda', USO_CONSUMO: 'Uso e consumo', DESPESA: 'Despesa (serviços e insumos)', IMOBILIZADO: 'Capital imobilizado', SEM: 'Sem categoria' };
-const DICAS_CAT = { REVENDA: 'Compras para vender nas lojas', USO_CONSUMO: 'Limpeza, escritório, embalagens de uso interno', DESPESA: 'Serviços, manutenção, insumos', IMOBILIZADO: 'Equipamentos, móveis, veículos, reformas' };
-const CORES_CAT = { REVENDA: '#1d7a4c', USO_CONSUMO: '#2c6aa3', DESPESA: '#c07b12', IMOBILIZADO: '#7d53b0', SEM: '#8a9690' };
+const NOMES_CAT = { REVENDA: 'Mercadoria para revenda', USO_CONSUMO: 'Uso e consumo', DESPESA: 'Despesa (serviços e insumos)', IMOBILIZADO: 'Capital imobilizado', TRANSFERENCIA: 'Transferência entre lojas', SEM: 'Sem categoria' };
+const DICAS_CAT = { REVENDA: 'Compras para vender nas lojas', USO_CONSUMO: 'Limpeza, escritório, embalagens de uso interno', DESPESA: 'Serviços, manutenção, insumos', IMOBILIZADO: 'Equipamentos, móveis, veículos, reformas', TRANSFERENCIA: 'Nota emitida por uma loja da rede para outra' };
+const CORES_CAT = { REVENDA: '#1d7a4c', USO_CONSUMO: '#2c6aa3', DESPESA: '#c07b12', IMOBILIZADO: '#7d53b0', TRANSFERENCIA: '#0f7f86', SEM: '#8a9690' };
 const nomeCat = k => NOMES_CAT[k || 'SEM'] || k;
 
 /* ───────── Lançamento: categoria, valor e fornecedor ───────── */
@@ -2475,6 +2824,7 @@ function aplicarVersaoServidor() {
   const v3 = servidorNaVersao('3.0');
   document.querySelectorAll('.soV3').forEach(el => { el.hidden = !v3; });
   document.querySelectorAll('.soV4').forEach(el => { el.hidden = !servidorNaVersao('4.0'); });
+  document.querySelectorAll('.soV5').forEach(el => { el.hidden = !servidorNaVersao('5.0'); });
   atualizarCartao();
   if (!v3 && $('fDias').value === 'livre') $('fDias').value = '30';
 }
@@ -2499,6 +2849,7 @@ $('tiposNota').innerHTML = Object.keys(DICAS_CAT).map(k => '<button type="button
 function escolherTipo(k) {
   estado.tipoNota = k || '';
   if ($('maisResumo')) atualizarCartao();
+  if (typeof desenharInfoNota === 'function' && $('pvInfo')) desenharInfoNota();
   $('tiposNota').querySelectorAll('button').forEach(b => { b.classList.toggle('sel', b.dataset.tipo === estado.tipoNota); b.setAttribute('aria-checked', b.dataset.tipo === estado.tipoNota); });
 }
 $('tiposNota').addEventListener('click', e => {
@@ -2744,6 +3095,532 @@ function ligarSino() {
 }
 function desligarSino() { clearInterval(sinoTimer); $('btSino').hidden = true; $('sinoPainel').hidden = true; }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('telaApp').hidden) puxarNotificacoes(); });
+
+/* ───────── Versão 5.0 ───────── */
+const NOMES_SEM_BOLETO = { SEM_MAOS: 'Boleto não estava em mãos', A_VISTA: 'Pago à vista', BONIFICACAO: 'Bonificação (sem cobrança)' };
+const notasBloqueadas = {};   // chave -> bloqueio (outra loja / fora da rede), vale enquanto o app está aberto
+const infoCache = {};         // chave -> infoNota
+const registradasSessao = {}; // chaves enviadas com sucesso nesta sessão
+
+function chipsFinanceiro(r) {
+  let h = '';
+  if (r.confFinanceira === 'DIVERGENTE') h += '<span class="chip warn" title="' + esc(r.confObs) + '">Boleto × nota</span>';
+  if (r.confFinanceira === 'PENDENTE') h += '<span class="chip warn">Falta boleto</span>';
+  if (r.semBoleto && r.semBoleto !== 'SEM_MAOS') h += '<span class="sub">' + esc(r.semBoletoNome || NOMES_SEM_BOLETO[r.semBoleto] || '') + '</span>';
+  return h ? '<div>' + h + '</div>' : '';
+}
+
+const precisaBoleto = u => servidorNaVersao('5.0') && !!u.chave && !(u.boletos || []).length && !u.semBoleto && !u.transferencia && u.situacao !== 'RECUSADA';
+function pedirBoletoDa(u, chaveEsperando) {
+  bip(false);
+  estado.chaveEsperando = chaveEsperando || estado.chaveEsperando || '';
+  desenharBoletos();
+  $('semBoletoBox').classList.add('pedindo');
+  aviso($('msgBip'), 'A nota nº ' + u.numero + ' ficou sem boleto. Leia o boleto dela ou toque no motivo (não tenho o boleto em mãos, pago à vista ou bonificação). Depois, leia a próxima nota.', 'warn');
+  if (Leitor.ligado()) camEstado('Falta o boleto da nota nº ' + u.numero);
+}
+const jaRegistradaAqui = chave => fila.some(i => i.tipo === 'registrar' && i.chave === chave) || !!registradasSessao[chave] || (estado.ultimasChaves || []).indexOf(chave) >= 0;
+
+/* Informações da nota (fornecedor, tipo, XML, destinatário) */
+async function buscarInfoNota(chave) {
+  if (!servidorNaVersao('5.0')) return;
+  if (infoCache[chave]) { aplicarInfoNota(chave, infoCache[chave]); return; }
+  try {
+    const i = await api('infoNota', estado.token, chave);
+    infoCache[chave] = i;
+    aplicarInfoNota(chave, i);
+  } catch (e) {
+    if (estado.notaPend === chave && !estado.infoNota) { estado.infoNota = { semInfo: true }; desenharInfoNota(); }
+  }
+}
+function aplicarInfoNota(chave, i) {
+  const numero = analisarChave(chave).numero;
+  if (i.bloqueio) { bloquearNota(chave, i.bloqueio, numero); return; }
+  const naFila = fila.find(x => x.tipo === 'registrar' && x.chave === chave);
+  if (i.registrada && !registradasSessao[chave] && !(naFila && naFila.enviando)) {
+    // Já registrada antes (por outra pessoa ou em outro aparelho).
+    if (naFila) { fila = fila.filter(x => x.chave !== chave); salvarFila(); }
+    if (estado.notaPend === chave) descartarNota();
+    if (estado.ultimaNota && estado.ultimaNota.chave === chave) { estado.ultimaNota = null; desenharBoletos(); }
+    camIgnorar(chave, 30000);
+    bip(false);
+    aviso($('msgBip'), 'A nota nº ' + numero + ' já foi registrada em ' + i.registrada.em + ' por ' + i.registrada.usuario + ' (' + i.registrada.loja + '). Não precisa registrar de novo.', 'warn');
+    desenharFilaNaTabela();
+    return;
+  }
+  if (estado.notaPend === chave) { estado.infoNota = i; atualizarPrevia(); }
+  const u = estado.ultimaNota;
+  if (u && u.chave === chave) { u.transferencia = !!i.transferencia; desenharBoletos(); }
+  const it = fila.find(x => x.chave === chave && x.tipo === 'registrar');
+  if (it && i.fornecedor && i.fornecedor.nome) { it.info.fornecedor = i.fornecedor.nome; salvarFila(); desenharFilaNaTabela(); }
+}
+
+function bloquearNota(chave, b, numero) {
+  notasBloqueadas[chave] = b;
+  fila = fila.filter(x => x.chave !== chave || x.enviando);
+  salvarFila();
+  if (estado.notaPend === chave) descartarNota();
+  if (estado.ultimaNota && estado.ultimaNota.chave === chave) { estado.ultimaNota = null; desenharBoletos(); }
+  camIgnorar(chave, 60000);
+  desenharFilaNaTabela();
+  alarme(b, numero);
+}
+
+/* Alarme: tela vermelha, som e vibração */
+let audioAlarme = null, alarmeAberto = '';
+document.addEventListener('pointerdown', () => {
+  // iPhone só libera o som depois de um toque: prepara o áudio no primeiro toque.
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) {}
+}, { passive: true });
+function tocar(freq, ini, dur, tipo, vol) {
+  const o = audio.createOscillator(), g = audio.createGain();
+  o.type = tipo || 'square'; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.18, audio.currentTime + ini);
+  g.gain.setValueAtTime(0, audio.currentTime + ini + dur);
+  o.connect(g); g.connect(audio.destination);
+  o.start(audio.currentTime + ini); o.stop(audio.currentTime + ini + dur + 0.02);
+}
+function sirene(tipo) {
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === 'suspended') audio.resume();
+    if (tipo === 'FORA_REDE') { for (let k = 0; k < 8; k++) tocar(k % 2 ? 620 : 980, k * 0.26, 0.24, 'square', 0.22); }
+    else { for (let k = 0; k < 3; k++) tocar(260, k * 0.45, 0.32, 'square', 0.2); }
+  } catch (e) {}
+  try { navigator.vibrate && navigator.vibrate(tipo === 'FORA_REDE' ? [500, 150, 500, 150, 900] : [300, 120, 300, 120, 300]); } catch (e) {}
+}
+function alarme(b, numero) {
+  const chaveAlarme = b.tipo + numero;
+  if (alarmeAberto === chaveAlarme) return;
+  alarmeAberto = chaveAlarme;
+  $('alarme').classList.toggle('outra', b.tipo === 'OUTRA_LOJA');
+  $('alarmeTitulo').textContent = b.titulo;
+  $('alarmeTexto').textContent = b.detalhe || '';
+  $('alarmeNota').textContent = numero ? 'Nota nº ' + numero : '';
+  $('alarme').hidden = false;
+  sirene(b.tipo);
+  let vezes = 0;
+  clearInterval(audioAlarme);
+  audioAlarme = setInterval(() => { if ($('alarme').hidden || ++vezes >= (b.tipo === 'FORA_REDE' ? 4 : 1)) { clearInterval(audioAlarme); return; } sirene(b.tipo); }, 2600);
+  aviso($('msgBip'), (numero ? 'Nota nº ' + numero + ': ' : '') + b.titulo + ' ' + (b.detalhe || ''), 'bad');
+  if (Leitor.ligado()) camEstado('NOTA RECUSADA: ' + (b.tipo === 'FORA_REDE' ? 'não é da rede' : 'é de outra loja'));
+  setTimeout(() => $('alarmeOk').focus(), 50);
+}
+$('alarmeOk').addEventListener('click', () => { clearInterval(audioAlarme); $('alarme').hidden = true; alarmeAberto = ''; focarChave(); });
+
+/* ───────── Fila de envio: a nota é confirmada na hora e enviada ao servidor em segundo plano ───────── */
+let fila = (() => { try { return JSON.parse(guardar.get('nfe_fila') || '[]'); } catch (e) { return []; } })();
+let falhas = (() => { try { return JSON.parse(guardar.get('nfe_falhas') || '[]'); } catch (e) { return []; } })();
+const idsNotas = (() => { try { return JSON.parse(guardar.get('nfe_ids') || '{}'); } catch (e) { return {}; } })();
+let filaRodando = false, filaTimer = null, filaEspera = 0;
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const euMesmo = () => estado.ctx ? estado.ctx.usuario.usuario : '';
+
+function salvarFila() {
+  guardar.set('nfe_fila', fila.length ? JSON.stringify(fila) : null);
+  guardar.set('nfe_falhas', falhas.length ? JSON.stringify(falhas.slice(-20)) : null);
+  desenharFila();
+}
+function guardarId(chave, id) {
+  idsNotas[chave] = id;
+  const ks = Object.keys(idsNotas); if (ks.length > 80) delete idsNotas[ks[0]];
+  guardar.set('nfe_ids', JSON.stringify(idsNotas));
+}
+
+function filaRegistrar(dados, info) {
+  const it = { uid: uid(), tipo: 'registrar', usuario: euMesmo(), chave: dados.chave, numero: info.numero, info, dados, criado: Date.now(), tentativas: 0 };
+  fila.push(it);
+  (estado.ultimaNota && estado.ultimaNota.chave === dados.chave ? estado.ultimaNota.boletos : []).forEach(b => { b._uid = it.uid; });
+  salvarFila();
+  processarFila();
+  return it;
+}
+/** Boleto lido depois do registro: entra junto com a nota se ela ainda não saiu; senão, vai sozinho. */
+function filaBoleto(u, b) {
+  const local = u.boletos.find(x => x.local && !x._uid && mesmoBoleto(x, b));
+  const reg = fila.find(i => i.tipo === 'registrar' && i.chave === u.chave && !i.enviando);
+  if (reg) {
+    reg.dados.boletos.push(paraServidor(b));
+    if (reg.dados.sem_boleto === 'SEM_MAOS') reg.dados.sem_boleto = '';
+    reg.dados.sem_boleto = reg.dados.boletos.length ? '' : reg.dados.sem_boleto;
+    if (local) local._uid = reg.uid;
+  } else {
+    const it = { uid: uid(), tipo: 'boleto', usuario: euMesmo(), chave: u.chave, numero: u.numero, dados: { boleto: paraServidor(b) }, criado: Date.now(), tentativas: 0 };
+    fila.push(it);
+    if (local) local._uid = it.uid;
+  }
+  salvarFila(); processarFila();
+}
+function filaTirarBoleto(u, b) {
+  const it = fila.find(i => i.uid === b._uid && !i.enviando);
+  if (!it) return false;
+  if (it.tipo === 'boleto') fila.splice(fila.indexOf(it), 1);
+  else {
+    const k = it.dados.boletos.findIndex(x => typeof x === 'string' ? x === b.barras : (!b.barras && x.vencimento === b.vencimento && Math.abs(x.valor - b.valor) < 0.005));
+    if (k < 0) return false;
+    it.dados.boletos.splice(k, 1);
+  }
+  salvarFila(); desenharFilaNaTabela();
+  return true;
+}
+function filaInformar(u, dados) {
+  const reg = fila.find(i => i.tipo === 'registrar' && i.chave === u.chave && !i.enviando);
+  if (reg) Object.assign(reg.dados, dados);
+  else fila.push({ uid: uid(), tipo: 'informar', usuario: euMesmo(), chave: u.chave, numero: u.numero, dados, criado: Date.now(), tentativas: 0 });
+  salvarFila(); processarFila();
+  // Com o motivo informado, a nota que estava esperando é lida na hora.
+  const esperando = estado.chaveEsperando;
+  if (dados.sem_boleto && esperando) { estado.chaveEsperando = ''; delete cam.ignorar[esperando]; setTimeout(() => processarCodigo(esperando), 300); }
+}
+
+const erroDeRede = m => /Sem conexão|não respondeu|Failed to fetch|NetworkError|Load failed|ocupado|tempo limite|timed out|Service invoked|Sessão expirada|HTTP 0|Connection|rede/i.test(m);
+
+function agendarFila() {
+  clearTimeout(filaTimer);
+  filaEspera = Math.min(60000, filaEspera ? filaEspera * 2 : 3000);
+  filaTimer = setTimeout(processarFila, filaEspera);
+}
+
+async function processarFila() {
+  if (filaRodando || !estado.token || !estado.ctx || !servidorNaVersao('5.0')) { desenharFila(); return; }
+  filaRodando = true;
+  let enviouAlguma = false;
+  try {
+    while (estado.ctx) {
+      const it = fila.find(i => i.usuario === euMesmo());
+      if (!it) break;
+      it.enviando = true; salvarFila(); desenharFilaNaTabela();
+      try {
+        await enviarItem(it);
+        fila = fila.filter(i => i !== it);
+        filaEspera = 0; enviouAlguma = true;
+        salvarFila();
+      } catch (err) {
+        it.enviando = false;
+        const msg = String(err && err.message || err);
+        if (erroDeRede(msg)) { it.tentativas++; it.erro = msg; salvarFila(); desenharFilaNaTabela(); agendarFila(); break; }
+        fila = fila.filter(i => i !== it && !(it.tipo === 'registrar' && i.chave === it.chave));
+        salvarFila();
+        registrarFalha(it, msg);
+      }
+    }
+  } finally {
+    filaRodando = false; desenharFila(); desenharFilaNaTabela();
+    if (enviouAlguma && !$('aba-receber').hidden) atualizarUltimasDepois();
+  }
+}
+let ultimasTimer;
+function atualizarUltimasDepois() { clearTimeout(ultimasTimer); ultimasTimer = setTimeout(carregarUltimas, 600); }
+
+function boletosDaUltima(u, listaServidor, uidFeito) {
+  const pendentes = (u.boletos || []).filter(b => b.local && b._uid !== uidFeito && fila.some(i => i.uid === b._uid));
+  u.boletos = (listaServidor || []).concat(pendentes);
+}
+
+async function enviarItem(it) {
+  const ultima = () => estado.ultimaNota && estado.ultimaNota.chave === it.chave ? estado.ultimaNota : null;
+  if (it.tipo === 'registrar') {
+    const t0 = performance.now();
+    const r = await api('registrarNota', estado.token, it.dados);
+    const u = ultima();
+    guardarId(it.chave, r.id);
+    registradasSessao[it.chave] = true;
+    if (u) {
+      u.id = r.id; u.conf = r.confFinanceira; u.confObs = r.confObs;
+      boletosDaUltima(u, r.boletosLista, it.uid);
+      desenharBoletos();
+      if (r.confFinanceira === 'DIVERGENTE' && !estado.notaPend) aviso($('msgBip'), 'Nota nº ' + it.numero + ': ' + r.confObs + ' A analista foi avisada.', 'warn');
+    }
+    contarParaAvaliacao(performance.now() - t0);
+    return;
+  }
+  const id = idsNotas[it.chave];
+  if (!id) throw new Error('A nota nº ' + it.numero + ' não foi registrada; o boleto/motivo não pôde ser gravado.');
+  if (it.tipo === 'boleto') {
+    const lista = await api('adicionarBoleto', estado.token, id, it.dados.boleto);
+    const u = ultima();
+    if (u) { boletosDaUltima(u, lista, it.uid); u.confObs = ''; desenharBoletos(); }
+  } else if (it.tipo === 'informar') {
+    const r = await api('informarNota', estado.token, id, it.dados);
+    const u = ultima();
+    if (u && r && r.conf) { u.conf = r.conf.status; u.confObs = r.conf.obs; desenharBoletos(); }
+  }
+}
+
+function registrarFalha(it, msg) {
+  const bloqueio = msg.match(/^(ESTA NF-e (?:PERTENCE A OUTRA LOJA DA REDE\.|NÃO PERTENCE À REDE [^.]+\. RECUSE O RECEBIMENTO\.))\s*([\s\S]*)$/);
+  const oQue = it.tipo === 'registrar' ? 'A nota nº ' + it.numero + ' NÃO foi registrada' : (it.tipo === 'boleto' ? 'O boleto da nota nº ' + it.numero + ' não foi gravado' : 'A informação da nota nº ' + it.numero + ' não foi gravada');
+  falhas.push({ id: uid(), texto: oQue + ': ' + msg, quando: Date.now(), usuario: it.usuario });
+  salvarFila();
+  if (bloqueio) {
+    if (!notasBloqueadas[it.chave]) bloquearNota(it.chave, { tipo: /NÃO PERTENCE/.test(bloqueio[1]) ? 'FORA_REDE' : 'OUTRA_LOJA', titulo: bloqueio[1], detalhe: bloqueio[2] }, it.numero);
+    return;
+  }
+  if (it.tipo === 'registrar' && estado.ultimaNota && estado.ultimaNota.chave === it.chave) { estado.ultimaNota = null; desenharBoletos(); }
+  bip(false);
+  aviso($('msgBip'), oQue + ': ' + msg, 'bad');
+}
+
+function desenharFila() {
+  const box = $('filaBox');
+  if (!box) return;
+  const minhas = fila.filter(i => i.usuario === euMesmo());
+  const notas = minhas.filter(i => i.tipo === 'registrar').length;
+  const semRede = minhas.some(i => i.tentativas > 0);
+  const minhasFalhas = falhas.filter(f => f.usuario === euMesmo());
+  box.hidden = !minhas.length && !minhasFalhas.length;
+  box.innerHTML = (minhas.length ? '<div class="enviando">' + (semRede
+      ? '⚠ Sem conexão com o servidor: ' + minhas.length + (minhas.length === 1 ? ' envio guardado' : ' envios guardados') + ' neste aparelho. O app tenta de novo sozinho; não feche a conta.'
+      : 'Enviando ' + (notas ? notas + (notas === 1 ? ' nota' : ' notas') : minhas.length === 1 ? '1 boleto' : minhas.length + ' itens') + ' para a analista…') + '</div>' : '') +
+    minhasFalhas.map(f => '<div class="falha"><span>' + esc(f.texto) + '</span><button type="button" data-falha-ok="' + esc(f.id) + '">OK</button></div>').join('');
+}
+$('filaBox').addEventListener('click', e => {
+  const b = e.target.closest('[data-falha-ok]');
+  if (!b) return;
+  falhas = falhas.filter(f => f.id !== b.dataset.falhaOk); salvarFila();
+});
+
+/** Notas ainda na fila aparecem no topo dos "Últimos registros". */
+function desenharFilaNaTabela() {
+  const tb = $('tbFila');
+  if (!tb) return;
+  const itens = fila.filter(i => i.usuario === euMesmo() && i.tipo === 'registrar').slice().reverse();
+  tb.innerHTML = itens.map(i => {
+    const nb = i.dados.boletos.length;
+    return '<tr class="naFila"><td>agora<span class="sub">' + esc(i.usuario) + '</span></td>' +
+      '<td><span class="mono">' + esc(i.numero) + '</span><span class="sub">' + esc(i.info.fornecedor || 'série ' + i.info.serie) + '</span></td>' +
+      '<td class="opc">' + (i.info.fornecedor ? esc(i.info.fornecedor) + '<span class="sub mono">' + esc(i.info.cnpj) + '</span>' : '<span class="mono">' + esc(i.info.cnpj) + '</span>') + '</td>' +
+      '<td>' + (nb ? '<b class="mono">' + nb + (nb === 1 ? ' boleto' : ' boletos') + '</b>' : (i.dados.sem_boleto ? '<span class="sub">' + esc(NOMES_SEM_BOLETO[i.dados.sem_boleto]) + '</span>' : '<span class="muted">—</span>')) + '</td>' +
+      '<td>' + chip(SIT, i.dados.situacao) + '</td>' +
+      '<td class="opc">' + (i.tentativas ? '<span class="chip warn">Sem conexão</span>' : '<span class="chip neutro">Enviando…</span>') + '</td>' +
+      '<td><span class="chip neutro">' + (i.tentativas ? 'Guardada' : 'Enviando…') + '</span></td></tr>';
+  }).join('');
+}
+window.addEventListener('online', () => { filaEspera = 0; processarFila(); });
+
+/* ───────── Comprovante de envio ───────── */
+function abrirComprovante() {
+  if (!$('cpIni').value) { $('cpIni').value = hojeLocal(); $('cpFim').value = hojeLocal(); }
+  $('lblCpEscopo').hidden = !(temPerfil('GERENTE', 'ADMIN', 'ANALISTA') && estado.ctx.usuario.loja_id);
+  carregarComprovante();
+}
+const filtroCp = () => ({ inicio: $('cpIni').value, fim: $('cpFim').value || $('cpIni').value, escopo: $('cpEscopo').value === 'loja' && !$('lblCpEscopo').hidden ? 'loja' : '' });
+async function carregarComprovante() {
+  const tb = $('tbCp');
+  tb.innerHTML = '<tr><td colspan="6" class="vazio">Carregando…</td></tr>';
+  aviso($('msgCp'), '');
+  try {
+    const d = await api('comprovanteEnvio', estado.token, filtroCp());
+    estado.cp = d;
+    const t = d.totais;
+    $('cpCab').innerHTML = '<div style="display:grid;gap:2px"><span class="muted" style="font-size:12px">Protocolo</span><span class="protocolo">' + esc(d.protocolo) + '</span>' +
+      '<span class="muted" style="font-size:13px">' + esc(d.loja) + ' · ' + esc(d.escopo) + ' · ' + diaBr(d.inicio) + (d.fim !== d.inicio ? ' a ' + diaBr(d.fim) : '') + '</span></div>' +
+      '<div class="cpResumo" style="margin-top:10px">' + [['Notas enviadas', t.notas], ['Boletos', t.boletos + ' · ' + dinheiro(t.valorBoletos)], ['Divergências', t.divergencias], ['Recusadas', t.recusadas], ['Já lançadas', t.lancadas]]
+        .map(c => '<div><b>' + esc(c[1]) + '</b><span>' + esc(c[0]) + '</span></div>').join('') + '</div>';
+    tb.innerHTML = d.itens.length ? d.itens.slice().reverse().map(i => '<tr><td>' + esc(i.quando) + (i.urgente ? '<span class="chip urgente">URGENTE</span>' : '') + (d.escopo.indexOf('loja') >= 0 ? '<span class="sub">' + esc(i.usuario) + '</span>' : '') + '</td>' +
+      '<td><span class="mono">' + esc(i.numero) + '/' + esc(i.serie) + '</span><span class="sub mono" style="font-size:10.5px;word-break:break-all">' + esc(i.chave) + '</span></td>' +
+      '<td>' + esc(i.fornecedor || i.cnpj) + (i.fornecedor ? '<span class="sub mono">' + esc(i.cnpj) + '</span>' : '') + '</td>' +
+      '<td>' + chip(SIT, i.situacao) + (i.tipoDivergencia ? '<span class="sub">' + esc(i.tipoDivergencia) + '</span>' : '') + '</td>' +
+      '<td>' + (i.boletos ? '<b class="mono">' + i.boletos + ' · ' + dinheiro(i.valorBoletos) + '</b>' : '<span class="sub">' + esc(NOMES_SEM_BOLETO[i.semBoleto] || '—') + '</span>') + '</td>' +
+      '<td>' + (i.lancada ? '<span class="chip info">Lançada</span>' : '<span class="chip ok">Recebida pela analista</span>') + '</td></tr>').join('')
+      : '<tr><td colspan="6" class="vazio">Nenhuma nota registrada neste período.</td></tr>';
+    rotularTabela($('tabCp'));
+    const pend = fila.filter(i => i.usuario === euMesmo() && i.tipo === 'registrar').length;
+    if (pend) aviso($('msgCp'), pend + (pend === 1 ? ' nota ainda está sendo enviada' : ' notas ainda estão sendo enviadas') + ' e vai aparecer aqui assim que chegar.', 'warn');
+  } catch (err) { tb.innerHTML = '<tr><td colspan="6" class="vazio">' + esc(err.message) + '</td></tr>'; }
+}
+$('btCpVer').addEventListener('click', carregarComprovante);
+['cpIni', 'cpFim', 'cpEscopo'].forEach(id => $(id).addEventListener('change', carregarComprovante));
+async function pdfComprovante() {
+  const r = await api('comprovantePdf', estado.token, filtroCp());
+  const bin = atob(r.base64), bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return { r, arquivo: new File([bytes], r.nome, { type: 'application/pdf' }) };
+}
+$('btCpPdf').addEventListener('click', e => ocupado(e.currentTarget, async () => {
+  try { toast('Gerando o PDF…'); const { r } = await pdfComprovante(); baixarArquivo(r.nome, r.base64, 'application/pdf', true); }
+  catch (err) { aviso($('msgCp'), err.message, 'bad'); }
+}));
+$('btCpShare').addEventListener('click', e => ocupado(e.currentTarget, async () => {
+  try {
+    toast('Preparando o comprovante…');
+    const { r, arquivo } = await pdfComprovante();
+    const texto = 'Comprovante de envio de notas · protocolo ' + r.protocolo;
+    if (navigator.canShare && navigator.canShare({ files: [arquivo] })) await navigator.share({ files: [arquivo], title: texto, text: texto });
+    else { baixarArquivo(r.nome, r.base64, 'application/pdf', true); toast('PDF baixado. Envie pelo WhatsApp ou e-mail.'); }
+  } catch (err) { if (err.name !== 'AbortError') aviso($('msgCp'), err.message, 'bad'); }
+}));
+
+/* ───────── Centro de distribuição ───────── */
+const CD_STATUS = { FALTA_EMITIR: ['Falta emitir nota', 'warn'], NOTA_EMITIDA: ['Nota emitida · falta dar entrada', 'info'], CONCLUIDO: ['Concluído', 'ok'], CANCELADO: ['Cancelado', 'neutro'] };
+let cdFiltro = 'FALTA_EMITIR', cdCamLigada = false, cdUltimoLido = { codigo: '', quando: 0 };
+const cdRasc = (() => { try { return JSON.parse(guardar.get('nfe_cd') || 'null') || { origem: '', destino: '', itens: [], obs: '' }; } catch (e) { return { origem: '', destino: '', itens: [], obs: '' }; } })();
+const salvarCd = () => guardar.set('nfe_cd', JSON.stringify(cdRasc));
+
+function abrirCD() {
+  const lojas = estado.ctx.lojas || [];
+  const ops = '<option value="">Escolha…</option>' + lojas.map(l => '<option value="' + esc(l.id) + '">' + esc(l.nome) + '</option>').join('');
+  $('cdOrigem').innerHTML = ops; $('cdDestino').innerHTML = ops;
+  $('cdOrigem').value = cdRasc.origem || estado.ctx.usuario.loja_id || '';
+  $('cdDestino').value = cdRasc.destino || '';
+  $('cdObs').value = cdRasc.obs || '';
+  desenharCdItens();
+  carregarCD();
+}
+$('cdOrigem').addEventListener('change', () => { cdRasc.origem = $('cdOrigem').value; salvarCd(); });
+$('cdDestino').addEventListener('change', () => { cdRasc.destino = $('cdDestino').value; salvarCd(); });
+$('cdObs').addEventListener('input', () => { cdRasc.obs = $('cdObs').value; salvarCd(); });
+
+function cdIncluir(codigo, qtd) {
+  codigo = String(codigo || '').trim();
+  if (!codigo) return;
+  qtd = qtd > 0 ? qtd : 1;
+  const ja = cdRasc.itens.find(i => i.codigo === codigo);
+  if (ja) ja.quantidade = Math.round((Number(ja.quantidade) + qtd) * 1000) / 1000;
+  else {
+    cdRasc.itens.push({ codigo, descricao: '', quantidade: qtd });
+    api('produtoInfo', estado.token, codigo).then(p => {
+      const it = cdRasc.itens.find(i => i.codigo === codigo);
+      if (it && !it.descricao && p.descricao) { it.descricao = p.descricao; salvarCd(); desenharCdItens(); }
+    }).catch(() => {});
+  }
+  salvarCd(); desenharCdItens(); bip(true);
+  aviso($('msgCd'), (ja ? 'Mais ' : 'Incluído: ') + qtd.toLocaleString('pt-BR') + ' × ' + codigo + (ja ? ' (total ' + Number(ja.quantidade).toLocaleString('pt-BR') + ')' : ''), 'ok');
+}
+function desenharCdItens() {
+  const it = cdRasc.itens;
+  const total = it.reduce((s, i) => s + (Number(i.quantidade) || 0), 0);
+  $('cdItens').innerHTML = it.length
+    ? '<div class="muted" style="font-size:13px">' + it.length + (it.length === 1 ? ' produto' : ' produtos') + ' · ' + total.toLocaleString('pt-BR') + ' unidades</div>' +
+      it.map((i, k) => '<div class="cdItem"><div><input data-cd-desc="' + k + '" value="' + esc(i.descricao) + '" placeholder="Descrição (opcional)" aria-label="Descrição do produto ' + esc(i.codigo) + '"><div class="cod">' + esc(i.codigo) + '</div></div>' +
+        '<input data-cd-qtd="' + k + '" value="' + esc(String(i.quantidade).replace('.', ',')) + '" inputmode="decimal" aria-label="Quantidade">' +
+        '<button type="button" data-cd-rem="' + k + '" aria-label="Tirar produto">✕</button></div>').reverse().join('')
+    : '<div class="muted" style="font-size:13px">Nenhum produto ainda.</div>';
+}
+$('cdItens').addEventListener('input', e => {
+  const d = e.target.dataset;
+  if (d.cdDesc != null) { cdRasc.itens[Number(d.cdDesc)].descricao = e.target.value; salvarCd(); }
+  if (d.cdQtd != null) { const v = lerValor(e.target.value); if (v > 0) { cdRasc.itens[Number(d.cdQtd)].quantidade = v; salvarCd(); } }
+});
+$('cdItens').addEventListener('click', e => {
+  const b = e.target.closest('[data-cd-rem]');
+  if (b) { cdRasc.itens.splice(Number(b.dataset.cdRem), 1); salvarCd(); desenharCdItens(); }
+});
+function cdIncluirDigitado() {
+  const c = $('cdCodigo').value.trim();
+  if (!c) { $('cdCodigo').focus(); return; }
+  cdIncluir(c, lerValor($('cdQtd').value) || 1);
+  $('cdCodigo').value = ''; $('cdQtd').value = '1'; $('cdCodigo').focus();
+}
+$('cdAddBt').addEventListener('click', cdIncluirDigitado);
+$('cdCodigo').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); cdIncluirDigitado(); } });
+$('cdQtd').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); cdIncluirDigitado(); } });
+$('cdLimpar').addEventListener('click', () => {
+  if (cdRasc.itens.length && !confirm('Tirar todos os produtos deste pedido?')) return;
+  cdRasc.itens = []; cdRasc.obs = ''; $('cdObs').value = ''; salvarCd(); desenharCdItens(); aviso($('msgCd'), '');
+});
+
+function pararCdCam() {
+  if (cdCamLigada) { Leitor.desligar(); cdCamLigada = false; }
+  $('cdVideo').srcObject = null; $('cdCamPainel').hidden = true; $('cdCamTxt').textContent = 'Ler produtos com a câmera';
+}
+$('cdCam').addEventListener('click', async () => {
+  if (cdCamLigada) { pararCdCam(); return; }
+  if (Leitor.ligado()) pararCamera(false);
+  $('cdCamPainel').hidden = false; $('cdCamTxt').textContent = 'Fechar a câmera';
+  $('cdCamEstado').textContent = 'Abrindo a câmera…';
+  try {
+    await carregarZXing();
+    cdCamLigada = true;
+    await Leitor.ligar($('cdVideo'), codigo => {
+      // O mesmo produto parado na frente da câmera não conta duas vezes; tire e aponte de novo para somar.
+      if (cdUltimoLido.codigo === codigo && Date.now() - cdUltimoLido.quando < 2500) { cdUltimoLido.quando = Date.now(); return; }
+      cdUltimoLido = { codigo, quando: Date.now() };
+      cdIncluir(codigo, 1);
+      $('cdCamEstado').textContent = '✓ ' + codigo + '  ·  aponte para o próximo';
+      try { navigator.vibrate && navigator.vibrate(60); } catch (e) {}
+    }, () => !$('alarme').hidden, 'produto');
+    $('cdCamEstado').textContent = 'Aponte para o código de barras do produto';
+  } catch (err) { pararCdCam(); aviso($('msgCd'), 'A câmera não abriu. Digite o código do produto.', 'warn'); }
+});
+$('cdCamFechar').addEventListener('click', pararCdCam);
+document.addEventListener('visibilitychange', () => { if (document.hidden && cdCamLigada) pararCdCam(); });
+
+$('cdEnviar').addEventListener('click', e => ocupado(e.currentTarget, async () => {
+  const origem = $('cdOrigem').value, destino = $('cdDestino').value;
+  if (!origem || !destino) { aviso($('msgCd'), 'Escolha a loja de origem e a de destino.', 'bad'); return; }
+  if (origem === destino) { aviso($('msgCd'), 'A origem e o destino precisam ser lojas diferentes.', 'bad'); return; }
+  if (!cdRasc.itens.length) { aviso($('msgCd'), 'Inclua pelo menos um produto.', 'bad'); return; }
+  try {
+    const p = await api('cdCriar', estado.token, { origem_id: origem, destino_id: destino, itens: cdRasc.itens, observacao: $('cdObs').value });
+    cdRasc.itens = []; cdRasc.obs = ''; $('cdObs').value = ''; salvarCd(); desenharCdItens();
+    pararCdCam();
+    aviso($('msgCd'), 'Pedido nº ' + p.numero + ' enviado (' + p.origem + ' → ' + p.destino + ', ' + p.totalItens + (p.totalItens === 1 ? ' produto' : ' produtos') + '). Situação: Falta emitir nota.', 'ok');
+    cdFiltro = 'FALTA_EMITIR'; carregarCD();
+  } catch (err) { aviso($('msgCd'), err.message, 'bad'); }
+}));
+
+async function carregarCD() {
+  const box = $('cdLista');
+  box.innerHTML = '<div class="vazio">Carregando…</div>';
+  try {
+    const r = await api('cdListar', estado.token, {});
+    $('cdStatus').innerHTML = Object.keys(CD_STATUS).map(k => '<button type="button" data-cd-filtro="' + k + '"' + (k === cdFiltro ? ' class="sel"' : '') + '><b>' + (r.contagem[k] || 0) + '</b><span>' + esc(CD_STATUS[k][0]) + '</span></button>').join('');
+    $('cdListaTitulo').textContent = 'Pedidos: ' + CD_STATUS[cdFiltro][0];
+    const itens = r.itens.filter(p => p.status === cdFiltro);
+    box.innerHTML = itens.length ? itens.map(p => '<div class="pedido">' +
+      '<div class="pedTopo"><b>Pedido nº ' + esc(p.numero) + '</b>' + chip(CD_STATUS, p.status) + '</div>' +
+      '<div><b>' + esc(p.origem) + ' → ' + esc(p.destino) + '</b> · ' + p.totalItens + (p.totalItens === 1 ? ' produto' : ' produtos') + ' · ' + Number(p.totalQtd).toLocaleString('pt-BR') + ' unidades</div>' +
+      '<div class="muted" style="font-size:12.5px">Criado em ' + esc(p.criadoEm) + ' por ' + esc(p.criadoPor) +
+        (p.emitidaEm ? ' · nota emitida em ' + esc(p.emitidaEm) + ' por ' + esc(p.emitidaPor) + (p.nfe ? ' (NF-e ' + esc(p.nfe) + ')' : '') : '') +
+        (p.concluidaEm ? ' · entrada em ' + esc(p.concluidaEm) + ' por ' + esc(p.concluidaPor) : '') +
+        (p.canceladaEm ? ' · cancelado em ' + esc(p.canceladaEm) + ' por ' + esc(p.canceladaPor) + ': ' + esc(p.motivo) : '') + '</div>' +
+      (p.observacao ? '<div style="font-size:13.5px">“' + esc(p.observacao) + '”</div>' : '') +
+      '<details><summary>Ver produtos</summary><table>' + p.itens.map(i => '<tr><td class="mono">' + esc(i.codigo) + '</td><td>' + esc(i.descricao || '—') + '</td><td class="mono" style="text-align:right">' + Number(i.quantidade).toLocaleString('pt-BR') + '</td></tr>').join('') + '</table></details>' +
+      '<div class="detAcoes">' +
+        (p.podeEmitir ? '<button type="button" class="primario" data-cd-acao="emitir" data-id="' + esc(p.id) + '">Nota emitida</button>' : '') +
+        (p.podeConcluir ? '<button type="button" class="primario" data-cd-acao="concluir" data-id="' + esc(p.id) + '">Entrada dada (concluir)</button>' : '') +
+        '<button type="button" data-cd-acao="romaneio" data-id="' + esc(p.id) + '">Romaneio (PDF)</button>' +
+        (p.podeVoltar ? '<button type="button" data-cd-acao="voltar" data-id="' + esc(p.id) + '">Voltar etapa</button>' : '') +
+        (p.podeCancelar ? '<button type="button" data-cd-acao="cancelar" data-id="' + esc(p.id) + '">Cancelar</button>' : '') +
+      '</div></div>').join('') : '<div class="vazio">Nenhum pedido nesta situação.</div>';
+  } catch (err) { box.innerHTML = '<div class="aviso bad">' + esc(err.message) + '</div>'; }
+}
+$('cdStatus').addEventListener('click', e => { const b = e.target.closest('[data-cd-filtro]'); if (b) { cdFiltro = b.dataset.cdFiltro; carregarCD(); } });
+$('cdAtualizar').addEventListener('click', carregarCD);
+$('cdLista').addEventListener('click', e => {
+  const b = e.target.closest('[data-cd-acao]');
+  if (!b) return;
+  const id = b.dataset.id, acao = b.dataset.cdAcao;
+  ocupado(b, async () => {
+    try {
+      if (acao === 'romaneio') { toast('Gerando o romaneio…'); const r = await api('cdRomaneioPdf', estado.token, id); baixarArquivo(r.nome, r.base64, 'application/pdf', true); return; }
+      const dados = {};
+      if (acao === 'emitir') { const n = prompt('Número (ou chave) da NF-e de transferência emitida na Sysmo:', ''); if (n === null) return; dados.nfe = n; }
+      if (acao === 'concluir' && !confirm('Confirmar que a loja de destino já deu entrada na nota?')) return;
+      if (acao === 'voltar' && !confirm('Voltar este pedido para a etapa anterior?')) return;
+      if (acao === 'cancelar') { const m = prompt('Motivo do cancelamento:', ''); if (m === null) return; dados.motivo = m; }
+      const p = await api('cdAcao', estado.token, id, acao, dados);
+      toast('Pedido nº ' + p.numero + ': ' + CD_STATUS[p.status][0]);
+      carregarCD();
+    } catch (err) { toast(err.message); }
+  });
+});
+
+/* ───────── Administrador: excluir nota e apagar dados de teste ───────── */
+$('btLimpar').addEventListener('click', e => ocupado(e.currentTarget, async () => {
+  if ($('limparConf').value.trim().toUpperCase() !== 'APAGAR') { aviso($('msgLimpar'), 'Digite APAGAR no campo para confirmar.', 'bad'); return; }
+  if (!confirm('Apagar TODAS as notas, boletos, avaliações e pedidos? Um backup será feito antes.')) return;
+  aviso($('msgLimpar'), 'Fazendo o backup e apagando…', 'info');
+  try {
+    const r = await api('limparDadosTeste', estado.token, 'APAGAR');
+    fila = []; falhas = []; salvarFila(); Object.keys(idsNotas).forEach(k => delete idsNotas[k]); guardar.set('nfe_ids', null);
+    $('limparConf').value = '';
+    aviso($('msgLimpar'), 'Pronto. Apagados: ' + r.apagadas.Recebimentos + ' notas, ' + r.apagadas.Boletos + ' boletos, ' + r.apagadas.Avaliacoes + ' avaliações e ' + r.apagadas.Transferencias + ' pedidos. Backup salvo no Drive: ' + r.backup + '.', 'ok');
+  } catch (err) { aviso($('msgLimpar'), err.message, 'bad'); }
+}));
+
+document.addEventListener('click', e => { const b = e.target.closest('[data-ir-aba]'); if (b) irPara(b.dataset.irAba); });
 
 /* ───────── Início ───────── */
 estado.siteUrl = '';
