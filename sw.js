@@ -1,7 +1,7 @@
 // Donelli Fiscal: guarda a tela do app no celular para abrir rápido.
 // Sempre tenta buscar a versão nova primeiro; sem internet, usa a cópia guardada.
 // As chamadas ao servidor (Google) e às bibliotecas externas passam direto, sem cache.
-const CACHE = 'donelli-fiscal-2.0.0';
+const CACHE = 'donelli-fiscal-3.0';
 const ARQUIVOS = ['./', './index.html', './config.js', './manifest.webmanifest',
   './icone-192.png', './icone-512.png', './icone-maskable-512.png', './apple-touch-icon.png', './favicon-32.png'];
 
