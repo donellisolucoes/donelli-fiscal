@@ -432,6 +432,14 @@
   .cpResumo span { font-size: 12px; color: var(--muted); }
   .protocolo { font-family: var(--mono); font-weight: 700; font-size: 15px; }
   .confObs { font-size: 13px; }
+  .notasTopo { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .notasTopo .atualizar { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  #btAtualizarNotas { display: inline-flex; align-items: center; gap: 6px; }
+  #btAtualizarNotas.girando svg { animation: girar .8s linear infinite; }
+  @keyframes girar { to { transform: rotate(360deg); } }
+  tr.notaNova td { background: var(--accent-soft) !important; transition: background 2s; }
+  tr.notaNova td:first-child { box-shadow: inset 4px 0 0 var(--accent); }
+  @media (prefers-reduced-motion: reduce) { #btAtualizarNotas.girando svg { animation: none; } }
 
   /* v6.0 */
   .sinoItem.alerta { border-left-color: var(--warn); }
@@ -717,7 +725,12 @@
           <label class="soV3">Categoria<select id="fCat"></select></label>
           <label>Buscar<input id="fBusca" inputmode="numeric" placeholder="chave, nº ou CNPJ"></label>
         </div>
-        <div class="muted" id="totalNotas" style="font-size:13px"></div>
+        <div class="notasTopo">
+          <div class="muted" id="totalNotas" style="font-size:13px"></div>
+          <div class="atualizar"><span class="muted" id="notasHora"></span><button type="button" id="btAtualizarNotas" class="copiar" aria-label="Atualizar a lista de notas">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+            Atualizar</button></div>
+        </div>
         <div class="tabela"><table class="resp">
           <thead><tr><th>Recebida</th><th>Loja</th><th>Nota</th><th>Boletos</th><th data-largo>Chave</th><th>Situação</th><th>Conferência</th><th>Lançamento</th></tr></thead>
           <tbody id="tbNotas"></tbody>
@@ -2049,11 +2062,26 @@ async function carregarUltimas() {
 let buscaTimer;
 $('fBusca').addEventListener('input', () => { clearTimeout(buscaTimer); buscaTimer = setTimeout(carregarNotas, 400); });
 
-async function carregarNotas() {
+let notasVistas = null, notasCarregadasEm = 0, notasDadosVersao = '', notasQtdServidor = -1, carregandoNotas = false;
+async function carregarNotas(opc) {
+  const silencioso = !!(opc && opc.silencioso === true);
   const tb = $('tbNotas');
-  tb.innerHTML = '<tr><td colspan="8" class="vazio">Carregando…</td></tr>';
+  if (carregandoNotas && silencioso) return;
+  carregandoNotas = true;
+  if (!silencioso) tb.innerHTML = '<tr><td colspan="8" class="vazio">Carregando…</td></tr>';
+  $('btAtualizarNotas').classList.add('girando');
+  // Marca do servidor no momento da carga (para a atualização automática saber se algo mudou depois).
+  if (estado.ultimosDados) { notasDadosVersao = estado.ultimosDados.versao; notasQtdServidor = estado.ultimosDados.notas; }
   try {
     const r = await api('listarNotas', estado.token, filtrosNotas());
+    const antes = notasVistas;
+    notasVistas = new Set(r.itens.map(n => n.id));
+    notasCarregadasEm = Date.now();
+    const novas = antes && silencioso ? r.itens.filter(n => !antes.has(n.id)).map(n => n.id) : [];
+    setTimeout(() => { novas.forEach(id => { const tr = tb.querySelector('tr[data-id="' + id + '"]'); if (tr) tr.classList.add('notaNova'); }); }, 0);
+    $('notasHora').textContent = 'Atualizado às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) +
+      (novas.length ? ' · ' + novas.length + (novas.length === 1 ? ' nota nova' : ' notas novas') : '') + ' · atualiza sozinho';
+    if (novas.length) toast(novas.length === 1 ? '1 nota nova no painel' : novas.length + ' notas novas no painel');
     const s = r.resumo;
     const urg = s.urgentes || 0;
     $('resumo').innerHTML = [
@@ -2083,7 +2111,26 @@ async function carregarNotas() {
           '<span class="sub">' + esc(n.lancadoPor) + ' · ' + esc(n.lancadoEm) + '</span>' + (podeLancar() ? '<button class="link" data-lanc="' + esc(n.id) + '" data-v="0" style="font-size:12px">desfazer</button>' : '')
         : (podeLancar() ? '<button class="primario copiar" data-lanc="' + esc(n.id) + '" data-v="1">Marcar lançada</button>' : '<span class="chip neutro">A lançar</span>')) + '</td></tr>'
     ).join('') : '<tr><td colspan="8" class="vazio">Nenhuma nota com esses filtros.</td></tr>';
-  } catch (err) { tb.innerHTML = '<tr><td colspan="8" class="vazio">' + esc(err.message) + '</td></tr>'; }
+  } catch (err) { if (!silencioso) tb.innerHTML = '<tr><td colspan="8" class="vazio">' + esc(err.message) + '</td></tr>'; }
+  finally { carregandoNotas = false; $('btAtualizarNotas').classList.remove('girando'); }
+}
+$('btAtualizarNotas').addEventListener('click', () => carregarNotas());
+
+/**
+ * Atualização automática do painel de notas (a cada consulta do sino, de 20 em 20 segundos):
+ * na hora quando chegam 5 notas novas; senão, 1 minuto depois da última carga se algo mudou no servidor.
+ * Não atualiza com uma janela aberta, com alguém digitando num filtro ou com a aba do navegador escondida.
+ */
+function talvezAtualizarNotas(dados) {
+  if (!dados || $('aba-notas').hidden || document.hidden || carregandoNotas) return;
+  if (!$('modalNota').hidden || !$('modalLanc').hidden) return;
+  const foco = document.activeElement;
+  if (foco && (foco.id === 'fBusca' || foco.id === 'fForn' || foco.id === 'fIni' || foco.id === 'fFim')) return;
+  // Primeira consulta depois de abrir o painel: só guarda a referência.
+  if (notasQtdServidor < 0) { notasQtdServidor = dados.notas; notasDadosVersao = dados.versao; return; }
+  const novas = dados.notas - notasQtdServidor;
+  const mudou = dados.versao !== notasDadosVersao || dados.notas !== notasQtdServidor;
+  if (novas >= 5 || (mudou && Date.now() - notasCarregadasEm >= 60000)) carregarNotas({ silencioso: true });
 }
 
 document.addEventListener('click', e => {
@@ -3122,6 +3169,7 @@ async function puxarNotificacoes() {
   if ($('telaApp').hidden) return;
   try {
     const r = await api('notificacoes', estado.token);
+    if (r.dados) { estado.ultimosDados = r.dados; talvezAtualizarNotas(r.dados); }
     sinoAvisos = r.avisos || [];
     desenharSino();
     // Avisos novos de "lançada com sucesso" para quem bipou: toast + som, uma vez cada
