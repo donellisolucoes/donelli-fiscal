@@ -2175,7 +2175,8 @@ async function carregarConfig() {
   try {
     const p = await api('configPasta', estado.token);
     $('pastaId').value = p.pastaId;
-    $('pastaInfo').textContent = p.pastaId ? (p.ultima ? 'Última leitura: ' + p.ultima : 'Ainda não lida.') : 'Nenhuma pasta configurada.';
+    $('pastaInfo').textContent = p.pastaId ? (p.emAndamento ? 'Leitura em andamento: ' + p.lidosAteAgora + ' arquivos lidos até agora (continua sozinha a cada 5 minutos).' : p.ultima ? 'Última leitura completa: ' + p.ultima : 'Ainda não lida.') +
+      (p.naBase != null ? ' · ' + p.naBase + ' notas na base.' : '') : 'Nenhuma pasta configurada.';
   } catch (err) { $('pastaInfo').textContent = err.message; }
 }
 
@@ -2186,14 +2187,15 @@ const resumoImport = r => (r.arquivos != null ? r.arquivos + ' arquivo(s) lidos.
 
 $('btPasta').addEventListener('click', ev => ocupado(ev.currentTarget, async () => {
   aviso($('msgPasta'), 'Lendo a pasta… pode levar alguns minutos na primeira vez.', 'info');
-  try { const r = await api('salvarPasta', estado.token, $('pastaId').value); aviso($('msgPasta'), r.pasta ? 'Pasta “' + r.pasta + '” salva. ' + resumoImport(r) : 'Pasta removida.', r.erradas ? 'warn' : 'ok'); carregarConfig(); }
+  try { const r = await api('salvarPasta', estado.token, $('pastaId').value); aviso($('msgPasta'), r.pasta ? 'Pasta “' + r.pasta + '” salva. ' + resumoImport(r) + continuaPasta(r) : 'Pasta removida.', r.erradas ? 'warn' : 'ok'); carregarConfig(); }
   catch (err) { aviso($('msgPasta'), err.message, 'bad'); }
 }));
 $('btLerPasta').addEventListener('click', ev => ocupado(ev.currentTarget, async () => {
   aviso($('msgPasta'), 'Lendo a pasta…', 'info');
-  try { const r = await api('lerPastaAgora', estado.token); aviso($('msgPasta'), resumoImport(r), r.erradas ? 'warn' : 'ok'); carregarConfig(); }
+  try { const r = await api('lerPastaAgora', estado.token); aviso($('msgPasta'), resumoImport(r) + continuaPasta(r), r.erradas ? 'warn' : 'ok'); carregarConfig(); }
   catch (err) { aviso($('msgPasta'), err.message, 'bad'); }
 }));
+const continuaPasta = r => r.completo === false ? ' A pasta tem muitos arquivos: o resto continua sendo lido sozinho, em partes, a cada 5 minutos. Pode fechar esta tela.' : '';
 $('btImportar').addEventListener('click', ev => ocupado(ev.currentTarget, async () => {
   aviso($('msgImport'), 'Importando…', 'info');
   try { const r = await api('importarRelatorio', estado.token, $('txtImport').value); aviso($('msgImport'), resumoImport(r), r.erradas ? 'warn' : 'ok'); if (r.lidas) $('txtImport').value = ''; }
