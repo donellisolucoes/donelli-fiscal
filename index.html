@@ -432,6 +432,19 @@
   .cpResumo span { font-size: 12px; color: var(--muted); }
   .protocolo { font-family: var(--mono); font-weight: 700; font-size: 15px; }
   .confObs { font-size: 13px; }
+  .bancoInfo { font-size: 13px; color: var(--muted); }
+  .bancoInfo.alerta { color: var(--warn); background: var(--warn-soft); border-radius: 8px; padding: 8px 10px; font-weight: 600; }
+  .sugestoes { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: grid; max-height: 360px; overflow-y: auto; background: var(--card); }
+  .sugestoes button { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; text-align: left; display: grid; gap: 2px; padding: 9px 12px; background: var(--card); }
+  .sugestoes button:last-child { border-bottom: 0; }
+  .sugestoes button.sel, .sugestoes button:hover { background: var(--accent-soft); }
+  .sugestoes button b { font-size: 14px; }
+  .sugestoes button span { font-size: 12.5px; color: var(--muted); }
+  .sugVazio { padding: 10px 12px; font-size: 13px; color: var(--warn); }
+  .cdDesc { font-weight: 600; font-size: 14px; }
+  .cdItem .acima { color: var(--warn); font-weight: 600; }
+  .prodArq { display: grid; grid-template-columns: 1fr minmax(0, 260px); gap: 10px; align-items: end; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  @media (max-width: 700px) { .prodArq { grid-template-columns: 1fr; } }
   .notasTopo { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
   .notasTopo .atualizar { display: flex; align-items: center; gap: 10px; font-size: 13px; }
   #btAtualizarNotas { display: inline-flex; align-items: center; gap: 6px; }
@@ -678,7 +691,7 @@
       <div class="cdStatus" id="cdStatus"></div>
       <div class="card" id="cdNovo">
         <div class="detTopo"><div><h2>Novo pedido de transferência</h2>
-          <div class="muted" style="font-size:13px">Leia o código de barras dos produtos (ou digite o código interno). O pedido vai para <b>Falta emitir nota</b>.</div></div>
+          <div class="muted" style="font-size:13px">Leia o código de barras dos produtos ou busque pela descrição, pelo código interno ou pelo código de barras. O pedido vai para <b>Falta emitir nota</b>.</div></div>
           <button type="button" id="cdNovoFechar" class="copiar" hidden>Fechar</button></div>
         <div class="linha">
           <label>Sai da loja (origem)<select id="cdOrigem"></select></label>
@@ -693,11 +706,13 @@
         <button type="button" id="cdCam" class="btCamera primario">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h3l2-3h6l2 3h3v13H4z"/><circle cx="12" cy="13" r="4"/></svg>
           <span id="cdCamTxt">Ler produtos com a câmera</span></button>
+        <div id="cdBancoInfo" class="bancoInfo" hidden></div>
         <div class="cdAdd">
-          <input id="cdCodigo" autocomplete="off" placeholder="Código de barras ou código interno" aria-label="Código do produto">
+          <input id="cdCodigo" autocomplete="off" placeholder="Descrição, código interno ou código de barras" aria-label="Buscar produto por descrição, código interno ou código de barras" role="combobox" aria-controls="cdSugestoes">
           <input id="cdQtd" inputmode="decimal" autocomplete="off" value="1" aria-label="Quantidade">
           <button type="button" id="cdAddBt" class="primario">Incluir</button>
         </div>
+        <div id="cdSugestoes" class="sugestoes" role="listbox" hidden></div>
         <div id="cdItens"></div>
         <label>Observação<textarea id="cdObs" rows="2" maxlength="500" placeholder="Ex.: mandar no caminhão de amanhã"></textarea></label>
         <div class="detAcoes"><button type="button" id="cdEnviar" class="primario">Enviar pedido</button><button type="button" id="cdLimpar">Limpar</button></div>
@@ -922,6 +937,17 @@
         <label>Link do app (para o atalho)<input id="cfgApp" class="mono" placeholder="https://script.google.com/macros/s/.../exec"></label>
         <div><button id="btAtalho" class="primario">Salvar</button></div>
         <div id="msgAtalho" class="aviso" hidden></div>
+      </div>
+
+      <div class="card soV8">
+        <div><h2>Banco de produtos</h2>
+          <div class="muted" style="font-size:13px">Usado no Centro de Distribuição para achar o produto pela descrição, pelo código interno ou pelo código de barras. Importe o relatório da Sysmo <b>“Cadastro - Produtos”</b> em PDF, um de cada loja (traz o estoque e o preço da loja), ou o arquivo de texto da carga de produtos. Pode escolher vários arquivos de uma vez.</div></div>
+        <div id="prodInfo" style="font-size:13.5px"></div>
+        <div><label class="botaoArquivo">Escolher arquivos (PDF ou texto)<input type="file" id="prodArquivos" multiple accept=".pdf,.txt,.csv,.prn,application/pdf,text/plain" hidden></label></div>
+        <div id="prodLista" style="display:grid;gap:8px"></div>
+        <label class="opcao"><input type="checkbox" id="prodSubstituir"> Apagar o banco atual e começar do zero</label>
+        <div><button type="button" id="btImportarProd" class="primario" hidden>Importar para o banco de produtos</button></div>
+        <div id="msgProd" class="aviso" hidden></div>
       </div>
 
       <div class="card soV6">
@@ -2221,6 +2247,7 @@ $('btNovaLoja').addEventListener('click', () => desenharLojas(estado.ctx.lojas.c
 
 async function carregarConfig() {
   desenharLojas(estado.ctx.lojas);
+  carregarProdutosCfg();
   carregarAlertasCfg();
   carregarRotinasCfg();
   carregarAtalho();
@@ -2655,7 +2682,7 @@ function carregarLib(nome, url) {
   if (window[nome]) return Promise.resolve(window[nome]);
   if (!libs[nome]) libs[nome] = new Promise((ok, falha) => {
     const s = document.createElement('script'); s.src = url;
-    const erro = () => { libs[nome] = null; falha(new Error('Não consegui carregar ' + (nome === 'Chart' ? 'os gráficos' : 'o gerador de Excel') + '. Confira a internet e tente de novo.')); };
+    const erro = () => { libs[nome] = null; falha(new Error('Não consegui carregar ' + ({ Chart: 'os gráficos', XLSX: 'o gerador de Excel', pdfjsLib: 'o leitor de PDF' }[nome] || 'uma parte do app') + '. Confira a internet e tente de novo.')); };
     s.onload = () => window[nome] ? ok(window[nome]) : erro(); s.onerror = erro;
     document.head.appendChild(s);
   });
@@ -2952,6 +2979,7 @@ function aplicarVersaoServidor() {
   document.querySelectorAll('.soV4').forEach(el => { el.hidden = !servidorNaVersao('4.0'); });
   document.querySelectorAll('.soV5').forEach(el => { el.hidden = !servidorNaVersao('5.0'); });
   document.querySelectorAll('.soV6').forEach(el => { el.hidden = !servidorNaVersao('6.0'); });
+  document.querySelectorAll('.soV8').forEach(el => { el.hidden = !servidorNaVersao('8.0'); });
   atualizarCartao();
   if (!v3 && $('fDias').value === 'livre') $('fDias').value = '30';
 }
@@ -3600,55 +3628,12 @@ function abrirCD() {
   $('cdObs').value = cdRasc.obs || '';
   desenharCdItens();
   carregarCD();
+  if (servidorNaVersao('8.0')) { desenharBancoInfo(); Catalogo.carregar().then(() => { desenharBancoInfo(); desenharCdItens(); }).catch(() => desenharBancoInfo()); }
 }
 $('cdOrigem').addEventListener('change', () => { cdRasc.origem = $('cdOrigem').value; salvarCd(); });
 $('cdDestino').addEventListener('change', () => { cdRasc.destino = $('cdDestino').value; salvarCd(); });
 $('cdObs').addEventListener('input', () => { cdRasc.obs = $('cdObs').value; salvarCd(); });
 
-function cdIncluir(codigo, qtd) {
-  codigo = String(codigo || '').trim();
-  if (!codigo) return;
-  qtd = qtd > 0 ? qtd : 1;
-  const ja = cdRasc.itens.find(i => i.codigo === codigo);
-  if (ja) ja.quantidade = Math.round((Number(ja.quantidade) + qtd) * 1000) / 1000;
-  else {
-    cdRasc.itens.push({ codigo, descricao: '', quantidade: qtd });
-    api('produtoInfo', estado.token, codigo).then(p => {
-      const it = cdRasc.itens.find(i => i.codigo === codigo);
-      if (it && !it.descricao && p.descricao) { it.descricao = p.descricao; salvarCd(); desenharCdItens(); }
-    }).catch(() => {});
-  }
-  salvarCd(); desenharCdItens(); bip(true);
-  aviso($('msgCd'), (ja ? 'Mais ' : 'Incluído: ') + qtd.toLocaleString('pt-BR') + ' × ' + codigo + (ja ? ' (total ' + Number(ja.quantidade).toLocaleString('pt-BR') + ')' : ''), 'ok');
-}
-function desenharCdItens() {
-  const it = cdRasc.itens;
-  const total = it.reduce((s, i) => s + (Number(i.quantidade) || 0), 0);
-  $('cdItens').innerHTML = it.length
-    ? '<div class="muted" style="font-size:13px">' + it.length + (it.length === 1 ? ' produto' : ' produtos') + ' · ' + total.toLocaleString('pt-BR') + ' unidades</div>' +
-      it.map((i, k) => '<div class="cdItem"><div><input data-cd-desc="' + k + '" value="' + esc(i.descricao) + '" placeholder="Descrição (opcional)" aria-label="Descrição do produto ' + esc(i.codigo) + '"><div class="cod">' + esc(i.codigo) + '</div></div>' +
-        '<input data-cd-qtd="' + k + '" value="' + esc(String(i.quantidade).replace('.', ',')) + '" inputmode="decimal" aria-label="Quantidade">' +
-        '<button type="button" data-cd-rem="' + k + '" aria-label="Tirar produto">✕</button></div>').reverse().join('')
-    : '<div class="muted" style="font-size:13px">Nenhum produto ainda.</div>';
-}
-$('cdItens').addEventListener('input', e => {
-  const d = e.target.dataset;
-  if (d.cdDesc != null) { cdRasc.itens[Number(d.cdDesc)].descricao = e.target.value; salvarCd(); }
-  if (d.cdQtd != null) { const v = lerValor(e.target.value); if (v > 0) { cdRasc.itens[Number(d.cdQtd)].quantidade = v; salvarCd(); } }
-});
-$('cdItens').addEventListener('click', e => {
-  const b = e.target.closest('[data-cd-rem]');
-  if (b) { cdRasc.itens.splice(Number(b.dataset.cdRem), 1); salvarCd(); desenharCdItens(); }
-});
-function cdIncluirDigitado() {
-  const c = $('cdCodigo').value.trim();
-  if (!c) { $('cdCodigo').focus(); return; }
-  cdIncluir(c, lerValor($('cdQtd').value) || 1);
-  $('cdCodigo').value = ''; $('cdQtd').value = '1'; $('cdCodigo').focus();
-}
-$('cdAddBt').addEventListener('click', cdIncluirDigitado);
-$('cdCodigo').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); cdIncluirDigitado(); } });
-$('cdQtd').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); cdIncluirDigitado(); } });
 $('cdLimpar').addEventListener('click', () => {
   if (cdRasc.itens.length && !confirm('Tirar todos os produtos deste pedido?')) return;
   cdRasc.itens = []; cdRasc.obs = ''; $('cdObs').value = ''; salvarCd(); desenharCdItens(); aviso($('msgCd'), '');
@@ -3670,8 +3655,9 @@ $('cdCam').addEventListener('click', async () => {
       // O mesmo produto parado na frente da câmera não conta duas vezes; tire e aponte de novo para somar.
       if (cdUltimoLido.codigo === codigo && Date.now() - cdUltimoLido.quando < 2500) { cdUltimoLido.quando = Date.now(); return; }
       cdUltimoLido = { codigo, quando: Date.now() };
-      cdIncluir(codigo, 1);
-      $('cdCamEstado').textContent = '✓ ' + codigo + '  ·  aponte para o próximo';
+      const achou = cdIncluir(codigo, 1) !== false;
+      const p = achou && servidorNaVersao('8.0') ? Catalogo.achar(codigo) : null;
+      $('cdCamEstado').textContent = achou ? '✓ ' + (p ? p.descricao : codigo) + '  ·  aponte para o próximo' : '⚠ Não localizado: ' + codigo + ' (incluído; escreva a descrição)';
       try { navigator.vibrate && navigator.vibrate(60); } catch (e) {}
     }, () => !$('alarme').hidden, 'produto');
     $('cdCamEstado').textContent = 'Aponte para o código de barras do produto';
@@ -3701,6 +3687,7 @@ async function carregarCD() {
     const r = await api('cdListar', estado.token, {});
     $('cdStatus').innerHTML = Object.keys(CD_STATUS).map(k => '<button type="button" data-cd-filtro="' + k + '"' + (k === cdFiltro ? ' class="sel"' : '') + '><b>' + (r.contagem[k] || 0) + '</b><span>' + esc(CD_STATUS[k][0]) + '</span></button>').join('');
     $('cdListaTitulo').textContent = 'Pedidos: ' + CD_STATUS[cdFiltro][0];
+    cdUltimaLista = r.itens;
     const itens = r.itens.filter(p => p.status === cdFiltro);
     box.innerHTML = itens.length ? itens.map(p => '<div class="pedido">' +
       '<div class="pedTopo"><b>Pedido nº ' + esc(p.numero) + '</b>' + chip(CD_STATUS, p.status) + '</div>' +
@@ -3715,6 +3702,7 @@ async function carregarCD() {
         (p.podeEmitir ? '<button type="button" class="primario" data-cd-acao="emitir" data-id="' + esc(p.id) + '">Nota emitida</button>' : '') +
         (p.podeConcluir ? '<button type="button" class="primario" data-cd-acao="concluir" data-id="' + esc(p.id) + '">Entrada dada (concluir)</button>' : '') +
         '<button type="button" data-cd-acao="romaneio" data-id="' + esc(p.id) + '">Romaneio (PDF)</button>' +
+        '<button type="button" data-cd-acao="copiar" data-id="' + esc(p.id) + '">Copiar lista</button>' +
         (p.podeVoltar ? '<button type="button" data-cd-acao="voltar" data-id="' + esc(p.id) + '">Voltar etapa</button>' : '') +
         (p.podeCancelar ? '<button type="button" data-cd-acao="cancelar" data-id="' + esc(p.id) + '">Cancelar</button>' : '') +
       '</div></div>').join('') : '<div class="vazio">Nenhum pedido nesta situação.</div>';
@@ -3728,6 +3716,7 @@ $('cdLista').addEventListener('click', e => {
   const id = b.dataset.id, acao = b.dataset.cdAcao;
   ocupado(b, async () => {
     try {
+      if (acao === 'copiar') { await copiarListaPedido(id); return; }
       if (acao === 'romaneio') { toast('Gerando o romaneio…'); const r = await api('cdRomaneioPdf', estado.token, id); baixarArquivo(r.nome, r.base64, 'application/pdf', true); return; }
       const dados = {};
       if (acao === 'emitir') { const n = prompt('Número (ou chave) da NF-e de transferência emitida na Sysmo:', ''); if (n === null) return; dados.nfe = n; }
@@ -3889,6 +3878,397 @@ async function carregarPainel() {
   } catch (err) { box.innerHTML = '<div class="card"><div class="aviso bad">' + esc(err.message) + '</div></div>'; }
 }
 ['pnPeriodo', 'pnLoja'].forEach(id => $(id).addEventListener('change', carregarPainel));
+
+/* ───────── Leitura do cadastro de produtos da Sysmo (PDF "CADASTRO - PRODUTOS" ou texto) ───────── */
+const PDFJS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+const PDFJS_WORKER = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+async function carregarPdfJs() {
+  await carregarLib('pdfjsLib', PDFJS_URL);
+  if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    // O "worker" precisa vir do mesmo endereço do app: baixa o código e cria um endereço local para ele.
+    try { const t = await (await fetch(PDFJS_WORKER)).text(); pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([t], { type: 'text/javascript' })); }
+    catch (e) { pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER; }
+  }
+  return pdfjsLib;
+}
+const ehNum3 = t => /^-?[\d.]*\d,\d{3}$/.test(t), ehNum4 = t => /^-?[\d.]*\d,\d{4}$/.test(t);
+const numBr = t => Number(String(t).replace(/\./g, '').replace(',', '.')) || 0;
+
+/** Lê o PDF do relatório "CADASTRO - PRODUTOS" da Sysmo. Devolve {empresa, nomeEmpresa, data, linhas:[[codigo, gtin, descricao, estoque, preco]]}. */
+async function lerCadastroPdf(buffer, progresso) {
+  const lib = await carregarPdfJs();
+  const doc = await lib.getDocument({ data: new Uint8Array(buffer) }).promise;
+  const res = { empresa: '', nomeEmpresa: '', data: '', linhas: [], paginas: doc.numPages, naoLidas: 0 };
+  for (let n = 1; n <= doc.numPages; n++) {
+    const pg = await doc.getPage(n);
+    const tc = await pg.getTextContent();
+    const itens = tc.items.filter(i => i.str && i.str.trim()).map(i => ({ s: i.str, x: i.transform[4], y: Math.round(i.transform[5]) }));
+    // Agrupa os pedaços de texto em linhas (mesma altura na página).
+    const porY = new Map();
+    itens.forEach(i => { let k = [...porY.keys()].find(y => Math.abs(y - i.y) <= 2); if (k === undefined) { k = i.y; porY.set(k, []); } porY.get(k).push(i); });
+    const linhas = [...porY.entries()].sort((a, b) => b[0] - a[0]).map(([, l]) => l.sort((a, b) => a.x - b.x));
+    const cab = linhas.find(l => l.some(i => i.s.trim() === 'GTIN') && l.some(i => /^Produto/.test(i.s.trim())));
+    if (!cab) continue;
+    const xGtin = cab.find(i => i.s.trim() === 'GTIN').x, xProd = cab.find(i => /^Produto/.test(i.s.trim())).x;
+    if (n === 1) {
+      const topo = linhas[0].map(i => i.s).join(' ').replace(/\s+/g, ' ').trim();
+      const m = topo.match(/^(\d+)\s+(.*?)\s+(\d{2})\/(\d{2})\/(\d{4})/);
+      if (m) { res.empresa = m[1]; res.nomeEmpresa = m[2]; res.data = m[5] + '-' + m[4] + '-' + m[3]; }
+      const hora = linhas.slice(0, 3).map(l => l.map(i => i.s).join(' ')).join(' ').match(/\b(\d{2}:\d{2})\b/);
+      if (hora && res.data) res.data += ' ' + hora[1];
+    }
+    linhas.forEach(l => {
+      // Cada pedaço vira palavras, guardando a posição do pedaço.
+      const toks = [];
+      l.forEach(i => i.s.split(/\s+/).filter(Boolean).forEach((t, k) => toks.push({ t, x: i.x + k * 0.01 })));
+      if (toks.length < 4 || !/^\d{1,9}$/.test(toks[0].t) || toks[0].x >= xGtin - 2) return;
+      const k = toks.length;
+      if (!(ehNum3(toks[k - 3].t) && ehNum4(toks[k - 2].t) && ehNum4(toks[k - 1].t))) { res.naoLidas++; return; }
+      const meio = toks.slice(1, k - 3);
+      const gtin = meio.filter(t => t.x < xProd - 2).map(t => t.t).join('');
+      const desc = meio.filter(t => t.x >= xProd - 2).map(t => t.t).join(' ');
+      res.linhas.push([toks[0].t, gtin, desc, numBr(toks[k - 3].t), numBr(toks[k - 2].t)]);
+    });
+    if (progresso && (n % 20 === 0 || n === doc.numPages)) progresso(n, doc.numPages);
+  }
+  return res;
+}
+
+/** Lê o arquivo de texto de colunas fixas (carga de produtos): |CODIGO GTIN DESCRICAO CODIGO PRECO| ou CSV (codigo;gtin;descricao;preco). */
+function lerCadastroTexto(texto) {
+  const res = { empresa: '', nomeEmpresa: '', data: '', linhas: [], naoLidas: 0 };
+  String(texto).split(/\r?\n/).forEach(l => {
+    if (!l.trim()) return;
+    let m = l.match(/^\|(\d{1,9}) ([ \d]{13}) (.{20}) (\d{7}) +([\d.]+,\d{2})\|\s*$/);
+    if (m) { res.linhas.push([m[1], m[2].trim(), m[3].trim(), null, null]); return; }
+    const c = l.split(/[;\t]/).map(x => x.trim().replace(/^"|"$/g, ''));
+    if (c.length >= 3 && /^\d{1,9}$/.test(c[0])) { res.linhas.push([c[0], (c[1] || '').replace(/\D/g, ''), c[2], null, null]); return; }
+    res.naoLidas++;
+  });
+  return res;
+}
+
+/* ───────── Versão 8.0: banco de produtos (busca no aparelho) ───────── */
+const semAcentoUp = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+const codigoCanon = c => { c = String(c == null ? '' : c).trim(); return /^\d+$/.test(c) ? String(Number(c)) : c; };
+const gtinCanon = g => String(g == null ? '' : g).replace(/\D/g, '').replace(/^0+/, '');
+
+/** Guarda o banco no aparelho (IndexedDB), para não baixar de novo a cada vez. */
+const Guardado = {
+  abrir() { return new Promise((ok, falha) => { const r = indexedDB.open('donelli-fiscal', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => ok(r.result); r.onerror = () => falha(r.error); }); },
+  async ler(k) { try { const db = await this.abrir(); return await new Promise((ok, falha) => { const t = db.transaction('kv').objectStore('kv').get(k); t.onsuccess = () => ok(t.result); t.onerror = () => falha(t.error); }); } catch (e) { return null; } },
+  async gravar(k, v) { try { const db = await this.abrir(); await new Promise((ok, falha) => { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = ok; t.onerror = () => falha(t.error); }); } catch (e) {} },
+};
+
+async function descompactar(base64) {
+  const bin = atob(base64), bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+}
+
+const Catalogo = (() => {
+  let meta = null, lista = [], porCodigo = new Map(), porGtin = new Map(), versao = '', carregando = null;
+  const ler = o => { const r = {}; String(o || '').split(',').filter(Boolean).forEach(p => { const [k, v] = p.split(':'); r[k] = Number(v); }); return r; };
+  // Preço "*:2.75" = o mesmo em todas as lojas.
+  const lerPreco = o => { const r = ler(o); if ('*' in r) { const v = r['*']; delete r['*']; (meta && meta.lojas || estado.ctx.lojas || []).forEach(l => { r[l.id] = v; }); } return r; };
+  function montar(texto, extras) {
+    lista = []; porCodigo = new Map(); porGtin = new Map();
+    const add = p => { lista.push(p); porCodigo.set(p.codigo, p); p.gtins.forEach(g => { if (!porGtin.has(g)) porGtin.set(g, p); }); };
+    (texto ? texto.split('\n') : []).forEach(l => {
+      const c = l.split('\t');
+      if (!c[0]) return;
+      add({ codigo: c[0], gtins: (c[1] || '').split(',').filter(Boolean), descricao: c[2] || '', busca: semAcentoUp(c[2]), estoques: ler(c[3]), precos: lerPreco(c[4]), base: true });
+    });
+    (extras || []).forEach(e => { const cod = codigoCanon(e[0]); if (!porCodigo.has(cod)) add({ codigo: cod, gtins: String(e[1] || '').split(',').filter(Boolean).map(gtinCanon), descricao: e[2] || '', busca: semAcentoUp(e[2]), estoques: {}, precos: {}, base: false }); });
+  }
+  async function carregar(forcar) {
+    if (carregando) return carregando;
+    carregando = (async () => {
+      if (!lista.length && !forcar) {
+        const g = await Guardado.ler('catalogo');
+        if (g && g.texto) { versao = g.versao; meta = g.meta; montar(g.texto, g.meta && g.meta.extras); }
+      }
+      try {
+        const r = await api('catalogoProdutos', estado.token, forcar ? '' : versao);
+        meta = r;
+        if (r.dadosGz) {
+          const texto = await descompactar(r.dadosGz);
+          versao = r.versao; delete r.dadosGz;
+          montar(texto, r.extras);
+          Guardado.gravar('catalogo', { versao, texto, meta: r });
+        } else if (r.versao === versao) {
+          const g = await Guardado.ler('catalogo');
+          montar(g && g.texto, r.extras);
+        }
+      } catch (e) { if (!lista.length) throw e; }
+      return lista.length;
+    })();
+    try { return await carregando; } finally { carregando = null; }
+  }
+  /** Produto pelo código interno ou pelo código de barras (GTIN). */
+  function achar(cod) {
+    const c = String(cod || '').trim();
+    if (!c) return null;
+    return (/^\d+$/.test(c) && (porGtin.get(gtinCanon(c)) || porCodigo.get(codigoCanon(c)))) || porCodigo.get(c) || null;
+  }
+  /** Busca por parte da descrição (todas as palavras), código interno ou GTIN. */
+  function buscar(q, limite) {
+    limite = limite || 8;
+    q = String(q || '').trim();
+    if (!q || !lista.length) return [];
+    const res = [];
+    const exato = achar(q);
+    if (exato) res.push(exato);
+    const palavras = semAcentoUp(q).split(/\s+/).filter(Boolean);
+    const comeco = [], meio = [];
+    for (let i = 0; i < lista.length && comeco.length < 200; i++) {
+      const p = lista[i];
+      if (p === exato) continue;
+      if (palavras.every(w => p.busca.indexOf(w) >= 0)) (p.busca.startsWith(palavras[0]) ? comeco : meio).push(p);
+      else if (/^\d{3,}$/.test(q) && (p.codigo.startsWith(codigoCanon(q)) || p.gtins.some(g => g.startsWith(gtinCanon(q))))) meio.push(p);
+    }
+    comeco.sort((a, b) => a.descricao.length - b.descricao.length);
+    return res.concat(comeco, meio).slice(0, limite);
+  }
+  /** Data do cadastro mais recente (ou da loja indicada), para o aviso de banco desatualizado. */
+  function dataCadastro(lojaId) {
+    // A da loja de origem; senão, a mais recente dos PDFs das lojas; o arquivo de texto (sem data própria) só se não houver outra.
+    const d = (meta && meta.datas) || {};
+    const lojas = Object.keys(d).filter(k => k !== 'GERAL');
+    const v = (lojaId && d[lojaId]) || lojas.map(k => d[k]).sort().pop() || d.GERAL || '';
+    return v ? diaBr(v) + (v.length > 10 ? ' ' + v.slice(11, 16) : '') : '';
+  }
+  const nomeLoja = id => { const l = ((meta && meta.lojas) || (estado.ctx && estado.ctx.lojas) || []).find(x => x.id === id); return l ? l.nome : id; };
+  return { carregar, achar, buscar, dataCadastro, nomeLoja, meta: () => meta, qtd: () => lista.length };
+})();
+
+/** Texto do estoque nas lojas (do cadastro importado). */
+function textoEstoques(p) {
+  const ks = Object.keys(p.estoques || {});
+  if (!ks.length) return '';
+  return 'Estoque: ' + ks.map(k => Catalogo.nomeLoja(k) + ' ' + Number(p.estoques[k]).toLocaleString('pt-BR', { maximumFractionDigits: 3 })).join(' · ');
+}
+
+/* Centro de distribuição com o banco de produtos */
+let cdNaoAchados = 0, cdSugestoes = [], cdSugSel = 0, cdUltimaLista = [];
+const arred3 = v => Math.round(Number(v) * 1000) / 1000;
+const fmtQtd = v => Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 3 });
+
+function desenharBancoInfo() {
+  const el = $('cdBancoInfo');
+  if (!servidorNaVersao('8.0')) { el.hidden = true; return; }
+  const n = Catalogo.qtd(), data = Catalogo.dataCadastro($('cdOrigem').value);
+  el.hidden = false;
+  el.classList.toggle('alerta', cdNaoAchados >= 3);
+  el.textContent = !n ? 'O banco de produtos ainda não foi importado: inclua pelo código. (O administrador importa em Configurações → Banco de produtos.)'
+    : cdNaoAchados >= 3 ? '⚠ ' + cdNaoAchados + ' produtos não localizados. O banco de produtos pode estar desatualizado (cadastro de ' + data + '). Peça ao administrador para importar o cadastro novo da Sysmo.'
+    : 'Banco de produtos: ' + n.toLocaleString('pt-BR') + ' itens · cadastro de ' + data + '. Busque por descrição, código interno ou código de barras.';
+}
+function avisoNaoLocalizado(q, incluido) {
+  cdNaoAchados++;
+  const data = Catalogo.dataCadastro($('cdOrigem').value);
+  bip(false);
+  aviso($('msgCd'), 'Produto “' + q + '” não localizado no banco de produtos. ' + (data ? 'O banco pode estar desatualizado: cadastro de ' + data + '. ' : '') +
+    (incluido ? 'Ele foi incluído assim mesmo: confira o código e escreva a descrição.' : 'Confira o que foi digitado, busque por outra palavra ou pelo código.'), 'warn');
+  desenharBancoInfo();
+}
+
+function cdIncluir(codigo, qtd, produto) {
+  codigo = String(codigo || '').trim();
+  if (!codigo && !produto) return;
+  qtd = qtd > 0 ? qtd : 1;
+  const comBanco = servidorNaVersao('8.0') && Catalogo.qtd() > 0;
+  const p = produto || (comBanco ? Catalogo.achar(codigo) : null);
+  const cod = p ? p.codigo : codigoCanon(codigo);
+  const lidoGtin = /^\d{8,14}$/.test(codigo) ? gtinCanon(codigo) : '';
+  const gtin = p ? (lidoGtin && p.gtins.indexOf(lidoGtin) >= 0 ? lidoGtin : (p.gtins[0] || '')) : lidoGtin;
+  const ja = cdRasc.itens.find(i => i.codigo === cod);
+  if (ja) ja.quantidade = arred3(Number(ja.quantidade) + qtd);
+  else {
+    cdRasc.itens.push({ codigo: cod, gtin: gtin, descricao: p ? p.descricao : '', quantidade: qtd, foraDoBanco: !p && comBanco });
+    // Sem banco importado (ou servidor antigo): pergunta ao servidor a descrição aprendida em pedidos anteriores.
+    if (!p && !comBanco) api('produtoInfo', estado.token, cod).then(r => {
+      const it = cdRasc.itens.find(i => i.codigo === cod);
+      if (it && !it.descricao && r.descricao) { it.descricao = r.descricao; salvarCd(); desenharCdItens(); }
+    }).catch(() => {});
+  }
+  salvarCd(); desenharCdItens();
+  if (!p && comBanco && !ja) { avisoNaoLocalizado(codigo, true); return false; }
+  bip(true);
+  const item = cdRasc.itens.find(i => i.codigo === cod);
+  aviso($('msgCd'), (ja ? 'Mais ' : 'Incluído: ') + fmtQtd(qtd) + ' × ' + (item.descricao || cod) + ' (cód. ' + cod + ')' + (ja ? ' · total ' + fmtQtd(item.quantidade) : ''), 'ok');
+  return true;
+}
+
+function desenharCdItens() {
+  const it = cdRasc.itens;
+  const total = it.reduce((s, i) => s + (Number(i.quantidade) || 0), 0);
+  const origem = $('cdOrigem').value;
+  $('cdItens').innerHTML = it.length
+    ? '<div class="muted" style="font-size:13px">' + it.length + (it.length === 1 ? ' produto' : ' produtos') + ' · ' + fmtQtd(total) + ' unidades</div>' +
+      it.map((i, k) => {
+        const p = servidorNaVersao('8.0') ? Catalogo.achar(i.codigo) : null;
+        const est = p && origem && p.estoques && origem in p.estoques ? p.estoques[origem] : null;
+        const acima = est != null && Number(i.quantidade) > est;
+        return '<div class="cdItem"><div>' +
+          (p && !i.foraDoBanco ? '<div class="cdDesc">' + esc(i.descricao || p.descricao) + '</div>'
+            : '<input data-cd-desc="' + k + '" value="' + esc(i.descricao) + '" placeholder="Descrição" aria-label="Descrição do produto ' + esc(i.codigo) + '">') +
+          '<div class="cod">cód. ' + esc(i.codigo) + (i.gtin ? ' · GTIN ' + esc(i.gtin) : '') +
+            (est != null ? ' · <span' + (acima ? ' class="acima"' : '') + '>estoque em ' + esc(Catalogo.nomeLoja(origem)) + ': ' + fmtQtd(est) + (acima ? ' (pedido acima do estoque)' : '') + '</span>' : '') + '</div>' +
+          (i.foraDoBanco ? '<span class="chip warn">fora do banco</span>' : '') + '</div>' +
+          '<input data-cd-qtd="' + k + '" value="' + esc(String(i.quantidade).replace('.', ',')) + '" inputmode="decimal" aria-label="Quantidade">' +
+          '<button type="button" data-cd-rem="' + k + '" aria-label="Tirar produto">✕</button></div>';
+      }).reverse().join('')
+    : '<div class="muted" style="font-size:13px">Nenhum produto ainda.</div>';
+}
+$('cdItens').addEventListener('input', e => {
+  const d = e.target.dataset;
+  if (d.cdDesc != null) { cdRasc.itens[Number(d.cdDesc)].descricao = e.target.value; salvarCd(); }
+  if (d.cdQtd != null) { const v = lerValor(e.target.value); if (v > 0) { cdRasc.itens[Number(d.cdQtd)].quantidade = v; salvarCd(); } }
+});
+$('cdItens').addEventListener('change', e => { if (e.target.dataset.cdQtd != null) desenharCdItens(); });
+$('cdItens').addEventListener('click', e => {
+  const b = e.target.closest('[data-cd-rem]');
+  if (b) { cdRasc.itens.splice(Number(b.dataset.cdRem), 1); salvarCd(); desenharCdItens(); }
+});
+$('cdOrigem').addEventListener('change', desenharCdItens);
+
+/* Sugestões enquanto digita */
+function esconderSugestoes() { cdSugestoes = []; $('cdSugestoes').hidden = true; $('cdSugestoes').innerHTML = ''; }
+function desenharSugestoes(q) {
+  const box = $('cdSugestoes');
+  const origem = $('cdOrigem').value;
+  box.hidden = false;
+  box.innerHTML = cdSugestoes.length ? cdSugestoes.map((p, k) => {
+    const preco = origem && p.precos && p.precos[origem] ? ' · ' + dinheiro(p.precos[origem]) : '';
+    return '<button type="button" role="option" data-sug="' + k + '"' + (k === cdSugSel ? ' class="sel" aria-selected="true"' : '') + '><b>' + esc(p.descricao || '(sem descrição)') + '</b>' +
+      '<span>cód. ' + esc(p.codigo) + (p.gtins.length ? ' · GTIN ' + esc(p.gtins[0]) + (p.gtins.length > 1 ? ' +' + (p.gtins.length - 1) : '') : '') + preco + '</span>' +
+      (textoEstoques(p) ? '<span>' + esc(textoEstoques(p)) + '</span>' : '') + '</button>';
+  }).join('') : '<div class="sugVazio">Nada encontrado para “' + esc(q) + '”. O banco de produtos pode estar desatualizado' + (Catalogo.dataCadastro(origem) ? ' (cadastro de ' + esc(Catalogo.dataCadastro(origem)) + ')' : '') + '.</div>';
+}
+$('cdCodigo').addEventListener('input', () => {
+  const q = $('cdCodigo').value.trim();
+  if (!servidorNaVersao('8.0') || !Catalogo.qtd() || q.length < 2) { esconderSugestoes(); return; }
+  cdSugestoes = Catalogo.buscar(q, 8); cdSugSel = 0;
+  desenharSugestoes(q);
+});
+$('cdSugestoes').addEventListener('click', e => {
+  const b = e.target.closest('[data-sug]');
+  if (!b) return;
+  cdIncluir('', lerValor($('cdQtd').value) || 1, cdSugestoes[Number(b.dataset.sug)]);
+  $('cdCodigo').value = ''; $('cdQtd').value = '1'; esconderSugestoes(); $('cdCodigo').focus();
+});
+function cdIncluirDigitado() {
+  const q = $('cdCodigo').value.trim();
+  if (!q) { $('cdCodigo').focus(); return; }
+  const qtd = lerValor($('cdQtd').value) || 1;
+  if (servidorNaVersao('8.0') && Catalogo.qtd()) {
+    const exato = Catalogo.achar(q);
+    if (exato) cdIncluir(q, qtd, exato);
+    else if (cdSugestoes.length) cdIncluir('', qtd, cdSugestoes[cdSugSel] || cdSugestoes[0]);
+    else if (/^[\dA-Za-z.\-\/]{1,30}$/.test(q) && /\d/.test(q)) cdIncluir(q, qtd);
+    else { avisoNaoLocalizado(q, false); return; }
+  } else cdIncluir(q, qtd);
+  $('cdCodigo').value = ''; $('cdQtd').value = '1'; esconderSugestoes(); $('cdCodigo').focus();
+}
+$('cdAddBt').addEventListener('click', cdIncluirDigitado);
+$('cdCodigo').addEventListener('keydown', e => {
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && cdSugestoes.length) {
+    e.preventDefault(); cdSugSel = (cdSugSel + (e.key === 'ArrowDown' ? 1 : cdSugestoes.length - 1)) % cdSugestoes.length; desenharSugestoes($('cdCodigo').value.trim()); return;
+  }
+  if (e.key === 'Escape') { esconderSugestoes(); return; }
+  if (e.key === 'Enter') { e.preventDefault(); cdIncluirDigitado(); }
+});
+$('cdQtd').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); cdIncluirDigitado(); } });
+
+/* Configurações: importar o banco de produtos */
+let prodArquivos = [];
+function desenharProdInfo() {
+  const m = Catalogo.meta();
+  if (!m || !m.qtd) { $('prodInfo').innerHTML = '<span class="muted">Nenhum cadastro importado ainda.</span>'; return; }
+  const d = m.datas || {}, a = m.arquivos || {};
+  $('prodInfo').innerHTML = '<b>' + Number(m.qtd).toLocaleString('pt-BR') + ' produtos</b> no banco. ' +
+    Object.keys(d).map(k => (k === 'GERAL' ? 'Arquivo geral' : esc(Catalogo.nomeLoja(k))) + ': cadastro de ' + esc(diaBr(d[k]) + (d[k].length > 10 ? ' ' + d[k].slice(11, 16) : '')) + (a[k] ? ' (' + esc(a[k]) + ')' : '')).join(' · ');
+}
+async function carregarProdutosCfg() {
+  if (!servidorNaVersao('8.0')) return;
+  try { await Catalogo.carregar(); } catch (e) {}
+  desenharProdInfo();
+}
+function lojaDoArquivo(res, nome) {
+  const lojas = estado.ctx.lojas || [];
+  const fim = semAcentoUp(String(res.nomeEmpresa || '').split(' - ').pop());
+  if (fim) {
+    const c = lojas.filter(l => semAcentoUp(l.nome + ' ' + (l.cidade || '')).indexOf(fim) >= 0);
+    if (c.length === 1) return c[0].id;
+  }
+  const n = res.empresa || (String(nome).match(/\bL(\d)\b/i) || [])[1];
+  return n && lojas.some(l => l.id === 'L' + n) ? 'L' + n : '';
+}
+function desenharProdLista() {
+  const lojas = estado.ctx.lojas || [];
+  $('prodLista').innerHTML = prodArquivos.map((f, k) => '<div class="prodArq">' +
+    '<div><b>' + esc(f.nome) + '</b><span class="sub">' + (f.lendo ? esc(f.lendo) : f.erro ? '<span style="color:var(--bad)">' + esc(f.erro) + '</span>'
+      : (f.res.nomeEmpresa ? esc((f.res.empresa ? f.res.empresa + ' · ' : '') + f.res.nomeEmpresa) + ' · ' : '') + (f.res.data ? 'cadastro de ' + esc(diaBr(f.res.data) + (f.res.data.length > 10 ? ' ' + f.res.data.slice(11, 16) : '')) + ' · ' : '') +
+        f.res.linhas.length.toLocaleString('pt-BR') + ' linhas' + (f.feito ? ' · ' + esc(f.feito) : '')) + '</span></div>' +
+    (f.res ? '<label>Loja deste arquivo<select data-prod-loja="' + k + '"><option value="">Sem loja (só códigos e descrições)</option>' +
+      lojas.map(l => '<option value="' + esc(l.id) + '"' + (l.id === f.loja ? ' selected' : '') + '>' + esc(l.nome) + '</option>').join('') + '</select></label>' : '') + '</div>').join('');
+  $('btImportarProd').hidden = !prodArquivos.length || prodArquivos.some(f => f.lendo);
+}
+$('prodLista').addEventListener('change', e => { const s = e.target.closest('[data-prod-loja]'); if (s) prodArquivos[Number(s.dataset.prodLoja)].loja = s.value; });
+$('prodArquivos').addEventListener('change', async () => {
+  const arqs = [...$('prodArquivos').files];
+  $('prodArquivos').value = '';
+  if (!arqs.length) return;
+  aviso($('msgProd'), '');
+  prodArquivos = arqs.map(f => ({ nome: f.name, arquivo: f, lendo: 'Aguardando…' }));
+  desenharProdLista();
+  for (const f of prodArquivos) {
+    f.lendo = 'Lendo o arquivo…'; desenharProdLista();
+    try {
+      const buf = await f.arquivo.arrayBuffer();
+      if (/\.pdf$/i.test(f.nome) || new Uint8Array(buf.slice(0, 4)).join() === '37,80,68,70') {
+        f.res = await lerCadastroPdf(buf, (n, t) => { f.lendo = 'Lendo o PDF: página ' + n + ' de ' + t + '…'; desenharProdLista(); });
+      } else {
+        let txt = new TextDecoder('utf-8').decode(buf);
+        if (txt.indexOf('�') >= 0) txt = new TextDecoder('windows-1252').decode(buf);
+        f.res = lerCadastroTexto(txt);
+      }
+      if (!f.res.linhas.length) throw new Error('Nenhum produto encontrado neste arquivo. Use o relatório “Cadastro - Produtos” da Sysmo em PDF ou o arquivo de texto da carga de produtos.');
+      f.loja = lojaDoArquivo(f.res, f.nome);
+    } catch (err) { f.erro = err.message; }
+    f.lendo = '';
+    desenharProdLista();
+  }
+  if (prodArquivos.some(f => f.res && f.res.empresa)) aviso($('msgProd'), 'Confira a loja de cada arquivo antes de importar. O estoque e o preço ficam guardados por loja.', 'info');
+});
+$('btImportarProd').addEventListener('click', e => ocupado(e.currentTarget, async () => {
+  const validos = prodArquivos.filter(f => f.res && !f.erro);
+  if (!validos.length) return;
+  if ($('prodSubstituir').checked && !confirm('Apagar o banco de produtos atual e começar do zero com estes arquivos?')) return;
+  try {
+    for (let i = 0; i < validos.length; i++) {
+      const f = validos[i];
+      aviso($('msgProd'), 'Importando ' + (i + 1) + ' de ' + validos.length + ': ' + f.nome + '… (pode levar até 1 minuto)', 'info');
+      const r = await api('importarProdutos', estado.token, f.res.linhas, { loja_id: f.loja, data: f.res.data, arquivo: f.nome, substituir: i === 0 && $('prodSubstituir').checked });
+      f.feito = 'importado: ' + r.lidos.toLocaleString('pt-BR') + ' produtos (' + r.novos.toLocaleString('pt-BR') + ' novos, ' + r.atualizados.toLocaleString('pt-BR') + ' atualizados)';
+      desenharProdLista();
+    }
+    $('prodSubstituir').checked = false;
+    await Catalogo.carregar(true);
+    desenharProdInfo();
+    aviso($('msgProd'), 'Banco de produtos atualizado: ' + Catalogo.qtd().toLocaleString('pt-BR') + ' produtos. Os celulares baixam a versão nova na próxima vez que abrirem o Centro de Distribuição.', 'ok');
+  } catch (err) { aviso($('msgProd'), err.message, 'bad'); }
+}));
+
+/* Pedido: copiar a lista para digitar na Sysmo */
+async function copiarListaPedido(id) {
+  const p = cdUltimaLista.find(x => x.id === id);
+  if (!p) return;
+  const texto = p.itens.map(i => i.codigo + '\t' + String(i.quantidade).replace('.', ',') + '\t' + (i.descricao || '')).join('\n');
+  try { await navigator.clipboard.writeText(texto); toast('Lista copiada: código, quantidade e descrição de ' + p.itens.length + (p.itens.length === 1 ? ' produto' : ' produtos')); }
+  catch (e) { toast('Não consegui copiar neste aparelho.'); }
+}
 
 /* ───────── Início ───────── */
 estado.siteUrl = '';
