@@ -304,6 +304,28 @@
   #detConteudo .linhaApp input { flex: 1 1 auto; min-width: 0; width: auto; }
   #detConteudo .linhaApp button { flex: 0 0 auto; }
 
+  /* Relatórios */
+  .segmentos, .periodos { display: flex; gap: 6px; flex-wrap: wrap; }
+  .segmentos button, .periodos button { border-radius: 999px; padding: 7px 14px; }
+  .segmentos button.ativa, .periodos button.ativa { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  .graficos { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  @media (max-width: 400px) { .graficos { grid-template-columns: 1fr; } }
+  .grafico { position: relative; height: 260px; }
+  .graficos > .card { align-content: start; }
+  .ponto { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; flex: none; }
+  .resItem { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .resItem:last-child { border-bottom: 0; }
+  .resItem.warn b { color: var(--warn); } .resItem.bad b { color: var(--bad); }
+  #resConteudo { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: start; }
+
+  /* Lançamento */
+  .categorias { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (max-width: 420px) { .categorias { grid-template-columns: 1fr; } }
+  .categorias button { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 2px 6px; text-align: left; padding: 10px 12px; }
+  .categorias button small { grid-column: 2; color: var(--muted); font-size: 12px; }
+  .categorias button.sel { border-color: var(--accent); background: var(--accent-soft); outline: 2px solid var(--accent); }
+  .rotulo { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+
   .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--ink); color: var(--bg);
     padding: 10px 16px; border-radius: 10px; font-weight: 500; z-index: 20; max-width: calc(100% - 32px); }
   .vazio { padding: 20px; text-align: center; color: var(--muted); }
@@ -490,8 +512,83 @@
           <thead><tr><th data-largo>Nome</th><th>Loja</th><th>Perfil</th><th>Acesso</th><th></th></tr></thead>
           <tbody id="tbUsuarios"></tbody>
         </table></div>
-        <div class="muted" style="font-size:12.5px">Perfis: <b>LOJA</b> bipa notas só da própria loja · <b>ANALISTA</b> vê todas e marca como lançada · <b>ADMIN</b> faz tudo e aprova usuários.</div>
+        <div class="muted" style="font-size:12.5px">Perfis: <b>LOJA</b> bipa notas da própria loja · <b>GERENTE</b> bipa e vê notas, relatórios e contas a pagar da própria loja · <b>ANALISTA</b> lança as notas e vê tudo · <b>FINANCEIRO</b> vê relatórios e contas a pagar e dá baixa nos boletos · <b>ADMIN</b> faz tudo e aprova usuários.</div>
       </div>
+    </div>
+
+    <!-- Relatórios -->
+    <div id="aba-relatorios" class="aba" hidden>
+      <div class="segmentos" id="relSeg" role="tablist">
+        <button type="button" data-rel="notas">Notas lançadas</button>
+        <button type="button" data-rel="pagar">Contas a pagar</button>
+        <button type="button" data-rel="resumo">Resumo do dia</button>
+      </div>
+
+      <section id="rel-notas" class="aba" style="padding:0">
+        <div class="card">
+          <div class="periodos" id="relPeriodos">
+            <button type="button" data-per="dia">Diário</button><button type="button" data-per="semana">Semanal</button>
+            <button type="button" data-per="mes" class="ativa">Mensal</button><button type="button" data-per="trimestre">Trimestral</button>
+            <button type="button" data-per="semestre">Semestral</button><button type="button" data-per="ano">Anual</button>
+            <button type="button" data-per="livre">Período livre</button>
+          </div>
+          <div class="linha">
+            <label id="lblRelRef">Data de referência<input type="date" id="relRef"></label>
+            <label id="lblRelIni" hidden>De<input type="date" id="relIni"></label>
+            <label id="lblRelFim" hidden>Até (máx. 24 meses)<input type="date" id="relFim"></label>
+            <label>Loja<select id="relLoja"></select></label>
+            <label>Categoria<select id="relCat"></select></label>
+          </div>
+          <div class="muted" id="relPeriodoTxt" style="font-size:13px"></div>
+          <div class="detAcoes" id="relExportar"><button type="button" data-exp="txt">Exportar TXT</button><button type="button" data-exp="xlsx">Exportar Excel</button><button type="button" data-exp="pdf">Exportar PDF</button></div>
+          <div id="msgRel" class="aviso" hidden></div>
+        </div>
+        <div class="resumo" id="relCards"></div>
+        <div class="graficos">
+          <div class="card"><h3>Valor lançado no período</h3><div class="grafico"><canvas id="gSerie" role="img" aria-label="Gráfico do valor lançado no período"></canvas></div></div>
+          <div class="card"><h3>Por categoria</h3><div class="grafico"><canvas id="gCat" role="img" aria-label="Gráfico do valor por categoria"></canvas></div></div>
+        </div>
+        <div class="graficos">
+          <div class="card"><h3>Por loja</h3><div class="tabela"><table><thead><tr><th>Loja</th><th>Notas</th><th>Valor</th></tr></thead><tbody id="tbRelLoja"></tbody></table></div></div>
+          <div class="card"><h3>Maiores fornecedores</h3><div class="tabela"><table><thead><tr><th>Fornecedor</th><th>Notas</th><th>Valor</th></tr></thead><tbody id="tbRelForn"></tbody></table></div></div>
+        </div>
+        <div class="card"><h3>Notas lançadas no período</h3>
+          <div class="tabela"><table class="resp"><thead><tr><th>Lançada</th><th>Loja</th><th>Nota</th><th data-largo>Fornecedor</th><th>Categoria</th><th>Boletos</th><th>Valor</th></tr></thead><tbody id="tbRel"></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="rel-pagar" class="aba" style="padding:0" hidden>
+        <div class="card">
+          <div class="linha" style="align-items:end">
+            <label style="flex:1 1 200px">Loja<select id="pagLoja"></select></label>
+            <div class="detAcoes" id="pagExportar" style="flex:0 1 auto"><button type="button" data-exp="txt">Exportar TXT</button><button type="button" data-exp="xlsx">Exportar Excel</button><button type="button" data-exp="pdf">Exportar PDF</button></div>
+          </div>
+          <div id="msgPag" class="aviso" hidden></div>
+        </div>
+        <div class="resumo" id="pagCards"></div>
+        <div class="graficos">
+          <div class="card"><h3>A pagar nas próximas 8 semanas</h3><div class="grafico"><canvas id="gSemanas" role="img" aria-label="Gráfico do valor a pagar por semana"></canvas></div></div>
+          <div class="card"><h3>Próximos 6 meses e projeção</h3><div class="grafico"><canvas id="gMeses" role="img" aria-label="Gráfico do valor a pagar por mês com projeção"></canvas></div><div class="muted" id="pagEstimativa" style="font-size:12.5px"></div></div>
+        </div>
+        <div class="graficos">
+          <div class="card"><h3>Agenda dos próximos 14 dias</h3><div class="tabela"><table><thead><tr><th>Dia</th><th>Boletos</th><th>Valor</th></tr></thead><tbody id="tbAgenda"></tbody></table></div></div>
+          <div class="card"><h3>Em aberto por categoria</h3><div class="grafico"><canvas id="gPagCat" role="img" aria-label="Gráfico do valor em aberto por categoria"></canvas></div></div>
+        </div>
+        <div class="card"><h3>Boletos em aberto</h3>
+          <div class="tabela"><table class="resp"><thead><tr><th>Vencimento</th><th data-largo>Fornecedor</th><th>Categoria</th><th>Valor</th><th data-largo>Linha digitável</th><th></th></tr></thead><tbody id="tbPagar"></tbody></table></div>
+        </div>
+        <div class="card"><h3>Últimas baixas</h3>
+          <div class="tabela"><table class="resp"><thead><tr><th>Baixa</th><th data-largo>Fornecedor</th><th>Valor</th><th></th></tr></thead><tbody id="tbPagos"></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="rel-resumo" class="aba" style="padding:0" hidden>
+        <div class="card"><div class="linha" style="align-items:end">
+          <label style="flex:0 1 220px">Dia<input type="date" id="resDia"></label>
+          <div class="muted" style="font-size:13px;flex:1 1 260px">O mesmo resumo é enviado por e-mail todo dia, com o movimento do dia anterior. Os e-mails são definidos pelo administrador em Configurações.</div>
+        </div></div>
+        <div id="resConteudo"></div>
+      </section>
     </div>
 
     <!-- Avaliações -->
@@ -539,6 +636,20 @@
         <div><button id="btImportar" class="primario">Importar</button></div>
         <div id="msgImport" class="aviso" hidden></div>
       </div>
+      <div class="card">
+        <div><h2>Resumo diário por e-mail e backup</h2>
+          <div class="muted" style="font-size:13px">Todo dia, no horário escolhido, o app faz uma cópia completa da planilha (notas, boletos, usuários e configurações) na pasta <b>Donelli Fiscal - Backups</b> do Drive e envia o resumo do dia anterior para os e-mails abaixo. Os XMLs ficam guardados nas pastas do Drive.</div></div>
+        <label>E-mails que recebem o resumo (separe por vírgula)<textarea id="cfgEmails" rows="2" placeholder="administrador@empresa.com.br, analista@empresa.com.br"></textarea></label>
+        <div class="linha" style="align-items:end">
+          <label style="flex:0 1 160px">Horário<select id="cfgHora"></select></label>
+          <button type="button" id="btSalvarRotinas" class="primario" style="flex:0 0 auto">Salvar</button>
+          <button type="button" id="btEnviarResumo" style="flex:0 0 auto">Enviar resumo agora</button>
+          <button type="button" id="btBackup" style="flex:0 0 auto">Fazer backup agora</button>
+        </div>
+        <div class="muted" id="cfgRotinasInfo" style="font-size:13px"></div>
+        <div id="msgRotinas" class="aviso" hidden></div>
+      </div>
+
       <div class="card">
         <div><h2>Ícone do app no celular</h2>
           <div class="muted" style="font-size:13px">Com o <b>app instalável</b> (GitHub Pages), o ícone, a tela cheia e a câmera ao vivo já funcionam. Cole abaixo o endereço dele: quem abrir o link antigo do Google verá um botão para ir ao app novo. Os campos de ícone e link do Google só servem para o modo antigo.</div></div>
@@ -678,6 +789,21 @@
       <button type="button" class="fechar copiar" id="fecharNota" aria-label="Fechar">✕</button>
     </div>
     <div id="detConteudo"></div>
+  </div>
+</div>
+
+<div id="modalLanc" class="fundoModal" hidden role="dialog" aria-modal="true" aria-labelledby="tituloLanc">
+  <div class="card" style="width:min(560px,100%)">
+    <div class="detTopo">
+      <div><h2 id="tituloLanc">Lançar nota</h2><div class="muted" style="font-size:13px">Informe a categoria e o valor total da nota. Eles alimentam os relatórios.</div></div>
+      <button type="button" class="fechar copiar" id="fecharLanc" aria-label="Fechar">✕</button>
+    </div>
+    <div><div class="rotulo">Categoria</div><div class="categorias" id="lancCategorias" role="radiogroup" aria-label="Categoria da nota"></div></div>
+    <label>Valor total da nota (R$)<input id="lancValor" inputmode="decimal" autocomplete="off" placeholder="0,00"></label>
+    <div class="muted" id="lancOrigem" style="font-size:12.5px;margin-top:-6px"></div>
+    <label>Fornecedor<input id="lancFornecedor" maxlength="120" placeholder="Nome do fornecedor"></label>
+    <button type="button" class="primario" id="btConfirmarLanc">Confirmar lançamento</button>
+    <div id="msgLanc" class="aviso" hidden></div>
   </div>
 </div>
 
@@ -1115,11 +1241,12 @@ $('btSair').addEventListener('click', () => { api('sair', estado.token).catch(()
 /* ───────── App ───────── */
 const ABAS = [
   { id: 'receber', nome: 'Receber notas', ok: c => !!c.usuario.loja_id },
-  { id: 'notas', nome: 'Notas recebidas', ok: c => c.usuario.perfil !== 'LOJA' },
-  { id: 'faltam', nome: 'Não bipadas', ok: c => c.usuario.perfil !== 'LOJA' },
+  { id: 'notas', nome: 'Notas recebidas', ok: c => ['ANALISTA', 'ADMIN', 'GERENTE', 'FINANCEIRO'].indexOf(c.usuario.perfil) >= 0 },
+  { id: 'relatorios', nome: 'Relatórios', ok: c => ['ANALISTA', 'ADMIN', 'GERENTE', 'FINANCEIRO'].indexOf(c.usuario.perfil) >= 0 },
+  { id: 'faltam', nome: 'Não bipadas', ok: c => ['ANALISTA', 'ADMIN', 'GERENTE'].indexOf(c.usuario.perfil) >= 0 },
   { id: 'usuarios', nome: 'Usuários', ok: c => c.usuario.perfil === 'ADMIN' },
   { id: 'avaliacoes', nome: 'Avaliações', ok: c => c.usuario.perfil === 'ADMIN' },
-  { id: 'config', nome: 'Lojas e Sysmo', ok: c => c.usuario.perfil === 'ADMIN' },
+  { id: 'config', nome: 'Configurações', ok: c => c.usuario.perfil === 'ADMIN' },
   { id: 'conta', nome: 'Minha conta', ok: () => true },
 ];
 
@@ -1140,7 +1267,10 @@ function abrirApp(ctx) {
   $('contaVersao').textContent = 'Donelli Fiscal · versão ' + v.numero + (v.data ? ' de ' + dataCurta(v.data) : '') + '. Novidades desta versão:';
   $('contaNovidades').innerHTML = (v.novidades || []).map(n => '<li>' + esc(n) + '</li>').join('');
   $('abas').querySelectorAll('button').forEach(b => b.addEventListener('click', () => irPara(b.dataset.aba)));
-  irPara(visiveis[0].id);
+  // O financeiro abre direto nas contas a pagar; o gerente vê só a própria loja na lista de notas.
+  $('fLoja').disabled = ctx.usuario.perfil === 'GERENTE';
+  if (ctx.usuario.perfil === 'GERENTE') $('fLoja').value = ctx.usuario.loja_id;
+  if (ctx.usuario.perfil === 'FINANCEIRO') { relAtual = 'pagar'; irPara('relatorios'); } else irPara(visiveis[0].id);
   ligarSino();
 }
 
@@ -1148,7 +1278,7 @@ function irPara(aba) {
   if (aba !== 'receber' && Leitor.ligado()) pararCamera(false);
   document.querySelectorAll('.aba').forEach(s => { s.hidden = s.id !== 'aba-' + aba; });
   $('abas').querySelectorAll('button').forEach(b => b.classList.toggle('ativa', b.dataset.aba === aba));
-  ({ receber: abrirReceber, notas: carregarNotas, faltam: carregarFaltam, usuarios: carregarUsuarios, avaliacoes: carregarAvaliacoes, config: carregarConfig }[aba] || (() => {}))();
+  ({ receber: abrirReceber, notas: carregarNotas, faltam: carregarFaltam, usuarios: carregarUsuarios, avaliacoes: carregarAvaliacoes, config: carregarConfig, relatorios: () => abrirRelatorios() }[aba] || (() => {}))();
 }
 
 /* ───────── Receber ───────── */
@@ -1391,8 +1521,9 @@ async function carregarNotas() {
       '<td>' + chip(SIT, n.situacao) + (n.tipo ? '<span class="sub">' + esc(n.tipo) + '</span>' : '') + (n.observacao ? '<span class="sub">“' + esc(n.observacao) + '”</span>' : '') + '</td>' +
       '<td>' + chip(VAL, n.validacao) + (n.validacao === 'DESTINO_ERRADO' ? '<span class="sub">nota é do CNPJ ' + esc(n.cnpjDestinatario) + '</span>' : '') + '</td>' +
       '<td>' + (n.lancamento === 'LANCADA'
-        ? '<span class="chip info">Lançada</span><span class="sub">' + esc(n.lancadoPor) + ' · ' + esc(n.lancadoEm) + '</span><button class="link" data-lanc="' + esc(n.id) + '" data-v="0" style="font-size:12px">desfazer</button>'
-        : '<button class="primario copiar" data-lanc="' + esc(n.id) + '" data-v="1">Marcar lançada</button>') + '</td></tr>'
+        ? '<span class="chip info">Lançada</span>' + (n.valorNota ? '<span class="sub mono"><b>' + dinheiro(n.valorNota) + '</b></span>' : '') + (n.categoria ? '<span class="sub">' + esc(nomeCat(n.categoria)) + '</span>' : '') +
+          '<span class="sub">' + esc(n.lancadoPor) + ' · ' + esc(n.lancadoEm) + '</span>' + (podeLancar() ? '<button class="link" data-lanc="' + esc(n.id) + '" data-v="0" style="font-size:12px">desfazer</button>' : '')
+        : (podeLancar() ? '<button class="primario copiar" data-lanc="' + esc(n.id) + '" data-v="1">Marcar lançada</button>' : '<span class="chip neutro">A lançar</span>')) + '</td></tr>'
     ).join('') : '<tr><td colspan="8" class="vazio">Nenhuma nota com esses filtros.</td></tr>';
   } catch (err) { tb.innerHTML = '<tr><td colspan="8" class="vazio">' + esc(err.message) + '</td></tr>'; }
 }
@@ -1408,6 +1539,7 @@ document.addEventListener('click', e => {
     return;
   }
   const l = e.target.closest('[data-lanc]');
+  if (l && l.dataset.v === '1') { abrirLancamento(l.dataset.lanc); return; }
   if (l) ocupado(l, async () => {
     try { await api('marcarLancada', estado.token, l.dataset.lanc, l.dataset.v === '1'); toast(l.dataset.v === '1' ? 'Marcada como lançada' : 'Voltou para “a lançar”'); carregarNotas(); puxarNotificacoes(); }
     catch (err) { toast(err.message); }
@@ -1439,7 +1571,7 @@ async function carregarUsuarios() {
       '<tr data-u="' + esc(u.usuario) + '"><td><b>' + esc(u.nome) + '</b><span class="sub mono">' + esc(u.usuario) + ' · desde ' + esc(u.criadoEm) + '</span>' +
       (u.status === 'PENDENTE' ? '<span class="chip warn">aguardando aprovação</span>' : '') + '</td>' +
       '<td><select class="uLoja">' + opLoja(u.loja_id) + '</select></td>' +
-      '<td><select class="uPerfil">' + op(['LOJA', 'ANALISTA', 'ADMIN'], u.status === 'PENDENTE' && !u.loja_id ? 'ANALISTA' : u.perfil) + '</select>' +
+      '<td><select class="uPerfil">' + op(['LOJA', 'GERENTE', 'ANALISTA', 'FINANCEIRO', 'ADMIN'], u.status === 'PENDENTE' && !u.loja_id ? 'ANALISTA' : u.perfil) + '</select>' +
         (u.status === 'PENDENTE' && !u.loja_id ? '<span class="sub">não trabalha em loja</span>' : '') + '</td>' +
       '<td><select class="uStatus">' + op(['PENDENTE', 'ATIVO', 'BLOQUEADO'], u.status) + '</select></td>' +
       '<td style="white-space:nowrap"><button class="primario copiar uSalvar">' + (u.status === 'PENDENTE' ? 'Aprovar' : 'Salvar') + '</button> ' +
@@ -1485,6 +1617,7 @@ $('btNovaLoja').addEventListener('click', () => desenharLojas(estado.ctx.lojas.c
 
 async function carregarConfig() {
   desenharLojas(estado.ctx.lojas);
+  carregarRotinasCfg();
   carregarAtalho();
   try {
     const p = await api('configPasta', estado.token);
@@ -1640,7 +1773,7 @@ function fecharDetalhes() { $('modalNota').hidden = true; estado.detId = null; f
 
 function desenharDetalhes(d) {
   const n = d.nota, x = d.xml, bol = d.boletos || [];
-  const analista = estado.ctx.usuario.perfil !== 'LOJA';
+  const analista = !!d.podeLancar;
   $('tituloNota').textContent = 'Nota nº ' + n.numero + ' · série ' + n.serie;
   $('subNota').textContent = (x && x.emitente ? x.emitente + ' · ' : '') + 'CNPJ ' + n.cnpjEmitente;
   const campo = (rot, val) => '<div><span>' + rot + '</span>' + val + '</div>';
@@ -1666,6 +1799,7 @@ function desenharDetalhes(d) {
       (n.tipo || n.observacao ? campo('Divergência', esc(n.tipo || '') + (n.observacao ? '<span class="sub">“' + esc(n.observacao) + '”</span>' : '')) : '') +
       (x ? campo('Valor da nota', '<b>' + dinheiro(x.valorTotal) + '</b><span class="sub">' + x.itens + (x.itens === 1 ? ' item' : ' itens') + '</span>') : '') +
       (n.lancamento === 'LANCADA' ? campo('Lançada', esc(n.lancadoEm) + '<span class="sub">por ' + esc(n.lancadoPor) + '</span>') : '') +
+      (n.lancamento === 'LANCADA' && n.categoria ? campo('Categoria e valor lançados', esc(nomeCat(n.categoria)) + '<span class="sub mono"><b>' + dinheiro(n.valorNota) + '</b></span>') : '') +
     '</div>' +
 
     '<h3>Boletos ' + (bol.length ? '(' + bol.length + ' · ' + dinheiro(totalBol) + ')' : '') + '</h3>' +
@@ -1688,7 +1822,7 @@ function desenharDetalhes(d) {
         '<a class="botaoLink" href="' + PORTAL_NFE + '" target="_blank" rel="noopener">Consultar no Portal da NF-e</a></div>') +
 
     (analista ? '<div class="detAcoes" style="margin-top:6px">' + (n.lancamento === 'LANCADA'
-      ? '<button type="button" data-det-acao="desfazer">Voltar para “a lançar”</button>'
+      ? '<button type="button" data-det-acao="lancar">Corrigir categoria e valor</button><button type="button" data-det-acao="desfazer">Voltar para “a lançar”</button>'
       : '<button type="button" class="primario" data-det-acao="lancar">Marcar lançada</button>') + '</div>' : '') +
     '<div id="msgDet" class="aviso" hidden></div>';
 }
@@ -1711,9 +1845,11 @@ async function acaoDetalhe(acao, botao) {
         toast('Gerando o PDF…');
         const r = await api('gerarEspelho', estado.token, id);
         baixarArquivo(r.nome, r.base64, 'application/pdf', true); return;
-      } else if (acao === 'lancar' || acao === 'desfazer') {
-        await api('marcarLancada', estado.token, id, acao === 'lancar');
-        toast(acao === 'lancar' ? 'Marcada como lançada' : 'Voltou para “a lançar”');
+      } else if (acao === 'lancar') {
+        abrirLancamento(id); return;
+      } else if (acao === 'desfazer') {
+        await api('marcarLancada', estado.token, id, false);
+        toast('Voltou para “a lançar”');
         puxarNotificacoes();
       }
       desenharDetalhes(await api('detalhesNota', estado.token, id));
@@ -1759,10 +1895,368 @@ const resumoBoletosCel = b => b && b.qtd
   ? '<b class="mono">' + b.qtd + ' · ' + dinheiro(b.total) + '</b>' + (b.proximo ? '<span class="sub">próximo ' + diaBr(b.proximo) + '</span>' : '')
   : '<span class="muted">—</span>';
 
+/* ───────── Perfis ───────── */
+const temPerfil = (...perfis) => !!estado.ctx && perfis.indexOf(estado.ctx.usuario.perfil) >= 0;
+const podeLancar = () => temPerfil('ANALISTA', 'ADMIN');
+const NOMES_CAT = { REVENDA: 'Mercadoria para revenda', USO_CONSUMO: 'Uso e consumo', DESPESA: 'Despesa (serviços e insumos)', IMOBILIZADO: 'Capital imobilizado', SEM: 'Sem categoria' };
+const DICAS_CAT = { REVENDA: 'Compras para vender nas lojas', USO_CONSUMO: 'Limpeza, escritório, embalagens de uso interno', DESPESA: 'Serviços, manutenção, insumos', IMOBILIZADO: 'Equipamentos, móveis, veículos, reformas' };
+const CORES_CAT = { REVENDA: '#1d7a4c', USO_CONSUMO: '#2c6aa3', DESPESA: '#c07b12', IMOBILIZADO: '#7d53b0', SEM: '#8a9690' };
+const nomeCat = k => NOMES_CAT[k || 'SEM'] || k;
+
+/* ───────── Lançamento: categoria, valor e fornecedor ───────── */
+function lerValor(s) {
+  s = String(s || '').replace(/[R$\s]/g, '');
+  if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+  const v = Number(s);
+  return isFinite(v) ? v : NaN;
+}
+const valorBr = v => (Number(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+let lancId = null, lancCategoria = 'REVENDA';
+function escolherCategoria(k) {
+  lancCategoria = k;
+  $('lancCategorias').querySelectorAll('button').forEach(b => { b.classList.toggle('sel', b.dataset.cat === k); b.setAttribute('aria-checked', b.dataset.cat === k); });
+}
+$('lancCategorias').innerHTML = Object.keys(DICAS_CAT).map(k =>
+  '<button type="button" role="radio" data-cat="' + k + '"><span class="ponto" style="background:' + CORES_CAT[k] + '"></span><b>' + esc(NOMES_CAT[k]) + '</b><small>' + esc(DICAS_CAT[k]) + '</small></button>').join('');
+$('lancCategorias').addEventListener('click', e => { const b = e.target.closest('[data-cat]'); if (b) escolherCategoria(b.dataset.cat); });
+
+async function abrirLancamento(id) {
+  // Servidor ainda na versão anterior: lança como antes, sem categoria e valor.
+  if (!servidorNaVersao('2.0.0')) {
+    try { await api('marcarLancada', estado.token, id, true); toast('Marcada como lançada'); puxarNotificacoes(); if (!$('aba-notas').hidden) carregarNotas(); }
+    catch (err) { toast(err.message); }
+    return;
+  }
+  lancId = id;
+  aviso($('msgLanc'), 'Carregando sugestões…', 'info');
+  $('lancValor').value = ''; $('lancFornecedor').value = ''; $('lancOrigem').textContent = '';
+  escolherCategoria('REVENDA');
+  $('modalLanc').hidden = false;
+  try {
+    const s = await api('sugestaoLancamento', estado.token, id);
+    escolherCategoria(s.categoria);
+    $('lancValor').value = s.valor ? valorBr(s.valor) : '';
+    $('lancFornecedor').value = s.fornecedor || '';
+    $('lancOrigem').textContent = { XML: 'Valor sugerido pelo XML da nota. Confira antes de confirmar.', boletos: 'Valor sugerido pela soma dos boletos. Confira com o total da nota.', informado: 'Valor já informado antes. Altere se precisar.' }[s.origemValor] || 'Informe o valor total da nota.';
+    aviso($('msgLanc'), '');
+    if (!toque) $('lancValor').focus();
+  } catch (err) { aviso($('msgLanc'), err.message, 'bad'); }
+}
+function fecharLancamento() { $('modalLanc').hidden = true; lancId = null; }
+async function confirmarLancamento() {
+  const valor = lerValor($('lancValor').value);
+  if (!(valor > 0)) { aviso($('msgLanc'), 'Informe o valor da nota (por exemplo 1.234,56).', 'bad'); $('lancValor').focus(); return; }
+  await ocupado($('btConfirmarLanc'), async () => {
+    try {
+      await api('marcarLancada', estado.token, lancId, true, { categoria: lancCategoria, valor, fornecedor: $('lancFornecedor').value });
+      const id = lancId;
+      fecharLancamento();
+      toast('Nota lançada');
+      puxarNotificacoes();
+      if (!$('aba-notas').hidden) carregarNotas();
+      if (!$('modalNota').hidden && estado.detId === id) desenharDetalhes(await api('detalhesNota', estado.token, id));
+    } catch (err) { aviso($('msgLanc'), err.message, 'bad'); }
+  });
+}
+$('btConfirmarLanc').addEventListener('click', confirmarLancamento);
+$('lancValor').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); confirmarLancamento(); } });
+$('lancValor').addEventListener('input', () => aviso($('msgLanc'), ''));
+$('fecharLanc').addEventListener('click', fecharLancamento);
+$('modalLanc').addEventListener('click', e => { if (e.target === $('modalLanc')) fecharLancamento(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('modalLanc').hidden) fecharLancamento(); });
+
+/* ───────── Bibliotecas dos relatórios (carregadas só quando usadas) ───────── */
+const libs = {};
+function carregarLib(nome, url) {
+  if (window[nome]) return Promise.resolve(window[nome]);
+  if (!libs[nome]) libs[nome] = new Promise((ok, falha) => {
+    const s = document.createElement('script'); s.src = url;
+    s.onload = () => ok(window[nome]); s.onerror = () => { libs[nome] = null; falha(new Error('Não consegui carregar ' + nome + '. Confira a internet.')); };
+    document.head.appendChild(s);
+  });
+  return libs[nome];
+}
+const carregarGraficos = () => carregarLib('Chart', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js');
+const carregarExcel = () => carregarLib('XLSX', 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+
+const graficos = {};
+function cor(nome) { return getComputedStyle(document.documentElement).getPropertyValue(nome).trim(); }
+async function desenharGrafico(id, config) {
+  const canvas = $(id);
+  if (!canvas) return;
+  let Chart;
+  try { Chart = await carregarGraficos(); } catch (e) { canvas.parentElement.innerHTML = '<div class="vazio">' + esc(e.message) + '</div>'; return; }
+  if (graficos[id]) graficos[id].destroy();
+  Chart.defaults.color = cor('--muted');
+  Chart.defaults.borderColor = cor('--line');
+  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  config.options = Object.assign({ responsive: true, maintainAspectRatio: false, animation: { duration: 300 } }, config.options || {});
+  graficos[id] = new Chart(canvas, config);
+}
+const eixoReais = { ticks: { callback: v => 'R$ ' + Number(v).toLocaleString('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }) } };
+const dicaReais = { callbacks: { label: c => ' ' + dinheiro(c.parsed.y != null ? c.parsed.y : c.parsed) } };
+
+/* ───────── Relatórios: abas internas ───────── */
+let relAtual = 'notas';
+function abrirRelatorios(sub) {
+  if (!servidorNaVersao('2.0.0')) {
+    ['notas', 'pagar', 'resumo'].forEach(k => { $('rel-' + k).hidden = k !== 'notas'; });
+    aviso($('msgRel'), 'Os relatórios precisam do servidor na versão 2.0.0: o administrador deve publicar o Code.gs 2.0.0 no Google (Gerenciar implantações → Nova versão).', 'warn');
+    return;
+  }
+  const pode = { notas: true, pagar: true, resumo: temPerfil('ADMIN', 'ANALISTA') };
+  $('relSeg').querySelector('[data-rel="resumo"]').hidden = !pode.resumo;
+  relAtual = sub && pode[sub] ? sub : (relAtual && pode[relAtual] ? relAtual : 'notas');
+  $('relSeg').querySelectorAll('button').forEach(b => b.classList.toggle('ativa', b.dataset.rel === relAtual));
+  ['notas', 'pagar', 'resumo'].forEach(k => { $('rel-' + k).hidden = k !== relAtual; });
+  const lojaFixa = temPerfil('GERENTE');
+  [$('relLoja'), $('pagLoja')].forEach(s => {
+    s.innerHTML = (lojaFixa ? '' : '<option value="">Todas as lojas</option>') + estado.ctx.lojas.filter(l => !lojaFixa || l.id === estado.ctx.usuario.loja_id).map(l => '<option value="' + esc(l.id) + '">' + esc(l.nome) + '</option>').join('');
+    s.disabled = lojaFixa;
+  });
+  if (relAtual === 'notas') carregarRelatorio();
+  if (relAtual === 'pagar') carregarPagar();
+  if (relAtual === 'resumo') carregarResumo();
+}
+$('relSeg').addEventListener('click', e => { const b = e.target.closest('[data-rel]'); if (b) abrirRelatorios(b.dataset.rel); });
+
+/* ───────── Relatório de notas lançadas ───────── */
+const hojeLocal = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+let relTipo = 'mes';
+function calcularPeriodo(tipo, ref) {
+  const [y, m, d] = ref.split('-').map(Number);
+  const iso = (Y, M, D) => new Date(Date.UTC(Y, M - 1, D)).toISOString().slice(0, 10);
+  if (tipo === 'dia') return [ref, ref];
+  if (tipo === 'semana') { const dow = (new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7; return [iso(y, m, d - dow), iso(y, m, d - dow + 6)]; }
+  if (tipo === 'mes') return [iso(y, m, 1), iso(y, m + 1, 0)];
+  if (tipo === 'trimestre') { const q = Math.floor((m - 1) / 3) * 3 + 1; return [iso(y, q, 1), iso(y, q + 3, 0)]; }
+  if (tipo === 'semestre') { const s = m <= 6 ? 1 : 7; return [iso(y, s, 1), iso(y, s + 6, 0)]; }
+  if (tipo === 'ano') return [iso(y, 1, 1), iso(y, 12, 31)];
+  return [$('relIni').value, $('relFim').value];
+}
+function filtrosRelatorio() {
+  if (!$('relRef').value) $('relRef').value = hojeLocal();
+  const [inicio, fim] = calcularPeriodo(relTipo, $('relRef').value);
+  return { inicio, fim, loja_id: $('relLoja').value, categoria: $('relCat').value };
+}
+$('relPeriodos').addEventListener('click', e => {
+  const b = e.target.closest('[data-per]'); if (!b) return;
+  relTipo = b.dataset.per;
+  $('relPeriodos').querySelectorAll('button').forEach(x => x.classList.toggle('ativa', x === b));
+  const livre = relTipo === 'livre';
+  $('lblRelRef').hidden = livre; $('lblRelIni').hidden = !livre; $('lblRelFim').hidden = !livre;
+  if (livre && !$('relIni').value) { const [i, f] = calcularPeriodo('mes', hojeLocal()); $('relIni').value = i; $('relFim').value = f; }
+  carregarRelatorio();
+});
+['relRef', 'relIni', 'relFim', 'relLoja', 'relCat'].forEach(id => $(id).addEventListener('change', carregarRelatorio));
+$('relCat').innerHTML = '<option value="">Todas as categorias</option>' + Object.keys(NOMES_CAT).map(k => '<option value="' + k + '">' + esc(NOMES_CAT[k]) + '</option>').join('');
+
+let relDados = null;
+async function carregarRelatorio() {
+  const f = filtrosRelatorio();
+  if (relTipo === 'livre') {
+    if (!f.inicio || !f.fim) { aviso($('msgRel'), 'Escolha as datas de início e fim.', 'info'); return; }
+    const dias = (Date.parse(f.fim) - Date.parse(f.inicio)) / 86400000;
+    if (dias < 0) { aviso($('msgRel'), 'A data final é anterior à inicial.', 'bad'); return; }
+    if (dias > 731) { aviso($('msgRel'), 'O período livre pode ter no máximo 24 meses.', 'bad'); return; }
+  }
+  $('relPeriodoTxt').textContent = 'Período: ' + diaBr(f.inicio) + (f.fim !== f.inicio ? ' a ' + diaBr(f.fim) : '') + ' · pela data do lançamento';
+  aviso($('msgRel'), 'Carregando…', 'info');
+  try {
+    const d = relDados = await api('relatorioNotas', estado.token, f);
+    aviso($('msgRel'), d.totais.estimados ? d.totais.estimados + ' nota(s) foram lançadas sem valor (antes da versão 2.0): para elas foi usado o total dos boletos.' : '', 'info');
+    const card = (rot, val, sub) => '<div class="card resumoCard"><b>' + val + '</b><span>' + rot + (sub ? '<br>' + sub : '') + '</span></div>';
+    $('relCards').innerHTML = card('Total lançado', dinheiro(d.totais.valor)) + card('Notas lançadas', d.totais.qtd) + card('Valor médio por nota', dinheiro(d.totais.ticketMedio)) +
+      card('Revenda', dinheiro((d.porCategoria.REVENDA || {}).valor || 0), ((d.porCategoria.REVENDA || {}).qtd || 0) + ' notas');
+    const rotSerie = k => d.passo === 'dia' ? k.slice(8) + '/' + k.slice(5, 7) : d.passo === 'semana' ? 'sem. ' + k.slice(8) + '/' + k.slice(5, 7) : ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'][Number(k.slice(5, 7)) - 1] + '/' + k.slice(2, 4);
+    desenharGrafico('gSerie', { type: 'bar', data: { labels: d.serie.map(s => rotSerie(s.chave)), datasets: [{ label: 'Valor lançado', data: d.serie.map(s => s.valor), backgroundColor: cor('--accent'), borderRadius: 4 }] },
+      options: { plugins: { legend: { display: false }, tooltip: dicaReais }, scales: { y: eixoReais, x: { grid: { display: false } } } } });
+    const cats = Object.keys(d.porCategoria);
+    desenharGrafico('gCat', { type: 'doughnut', data: { labels: cats.map(nomeCat), datasets: [{ data: cats.map(k => d.porCategoria[k].valor), backgroundColor: cats.map(k => CORES_CAT[k] || CORES_CAT.SEM), borderColor: cor('--card'), borderWidth: 2 }] },
+      options: { cutout: '62%', plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: c => ' ' + c.label + ': ' + dinheiro(c.parsed) } } } } });
+    const grupo = (g, rot) => Object.keys(g).sort((a, b) => g[b].valor - g[a].valor).map(k => '<tr><td>' + esc(rot(k)) + '</td><td class="mono">' + g[k].qtd + '</td><td class="mono"><b>' + dinheiro(g[k].valor) + '</b></td></tr>').join('') || '<tr><td colspan="3" class="vazio">Nada no período.</td></tr>';
+    $('tbRelLoja').innerHTML = grupo(d.porLoja, k => k);
+    $('tbRelForn').innerHTML = d.topFornecedores.map(x => '<tr><td>' + esc(x.nome || '—') + '<span class="sub mono">' + esc(x.cnpj) + '</span></td><td class="mono">' + x.qtd + '</td><td class="mono"><b>' + dinheiro(x.valor) + '</b></td></tr>').join('') || '<tr><td colspan="3" class="vazio">Nada no período.</td></tr>';
+    $('tbRel').innerHTML = d.itens.length ? d.itens.slice().reverse().map(i =>
+      '<tr data-id="' + esc(i.id) + '"><td>' + diaBr(i.data) + '<span class="sub">' + esc(i.lancadoPor) + '</span></td><td>' + esc(i.loja) + '</td><td class="mono">' + esc(i.numero) + '/' + esc(i.serie) + '</td>' +
+      '<td>' + esc(i.fornecedor || '—') + '<span class="sub mono">' + esc(i.cnpj) + '</span></td><td><span class="chip neutro"><span class="ponto" style="background:' + (CORES_CAT[i.categoria] || CORES_CAT.SEM) + '"></span>' + esc(nomeCat(i.categoria)) + '</span></td>' +
+      '<td class="mono">' + i.boletos + '</td><td class="mono"><b>' + dinheiro(i.valor) + '</b>' + (i.estimado ? '<span class="sub">pelos boletos</span>' : '') + '</td></tr>').join('')
+      : '<tr><td colspan="7" class="vazio">Nenhuma nota lançada neste período.</td></tr>';
+  } catch (err) { aviso($('msgRel'), err.message, 'bad'); }
+}
+$('tbRel').addEventListener('click', e => { const tr = e.target.closest('tr[data-id]'); if (tr) abrirDetalhes(tr.dataset.id); });
+
+/* ───────── Exportações ───────── */
+const nomeArquivo = (base, f) => base + '-' + f.inicio + (f.fim !== f.inicio ? '-a-' + f.fim : '');
+function pad(s, n, dir) { s = String(s == null ? '' : s); if (s.length > n) s = s.slice(0, n - 1) + '…'; return dir ? s.padStart(n) : s.padEnd(n); }
+
+function exportarRelatorio(formato, botao) {
+  const d = relDados;
+  if (!d) return;
+  const f = d.filtros;
+  if (formato === 'pdf') return ocupado(botao, async () => {
+    try { toast('Gerando o PDF…'); const r = await api('exportarRelatorioPdf', estado.token, filtrosRelatorio()); baixarArquivo(r.nome, r.base64, 'application/pdf', true); }
+    catch (err) { toast(err.message); }
+  });
+  if (formato === 'txt') {
+    const L = [];
+    L.push('DONELLI FISCAL - RELATÓRIO DE NOTAS LANÇADAS');
+    L.push('Período: ' + diaBr(f.inicio) + ' a ' + diaBr(f.fim) + ' | ' + f.loja + ' | Categoria: ' + f.categoria + ' | Gerado em ' + d.geradoEm);
+    L.push('');
+    L.push('Total lançado: ' + dinheiro(d.totais.valor) + ' | Notas: ' + d.totais.qtd + ' | Valor médio: ' + dinheiro(d.totais.ticketMedio));
+    L.push('');
+    L.push('POR CATEGORIA');
+    Object.keys(d.porCategoria).forEach(k => L.push('  ' + pad(nomeCat(k), 34) + pad(d.porCategoria[k].qtd + ' notas', 12, true) + pad(dinheiro(d.porCategoria[k].valor), 20, true)));
+    L.push('');
+    L.push('POR LOJA');
+    Object.keys(d.porLoja).forEach(k => L.push('  ' + pad(k, 34) + pad(d.porLoja[k].qtd + ' notas', 12, true) + pad(dinheiro(d.porLoja[k].valor), 20, true)));
+    L.push('');
+    L.push('NOTAS');
+    L.push(pad('Lançada', 11) + pad('Loja', 14) + pad('Nota', 12) + pad('Fornecedor', 32) + pad('Categoria', 26) + pad('Valor', 16, true));
+    L.push('-'.repeat(111));
+    d.itens.forEach(i => L.push(pad(diaBr(i.data), 11) + pad(i.loja, 14) + pad(i.numero + '/' + i.serie, 12) + pad(i.fornecedor || i.cnpj, 32) + pad(nomeCat(i.categoria), 26) + pad(dinheiro(i.valor) + (i.estimado ? '*' : ''), 16, true)));
+    if (d.totais.estimados) L.push('', '* valor estimado pela soma dos boletos');
+    baixarArquivo(nomeArquivo('Relatorio-notas', f) + '.txt', '﻿' + L.join('\r\n'), 'text/plain;charset=utf-8');
+    return;
+  }
+  return ocupado(botao, async () => {
+    try {
+      const XLSX = await carregarExcel();
+      const wb = XLSX.utils.book_new();
+      const resumo = [['Donelli Fiscal - Relatório de notas lançadas'], ['Período', diaBr(f.inicio) + ' a ' + diaBr(f.fim)], ['Loja', f.loja], ['Categoria', f.categoria], ['Gerado em', d.geradoEm], [],
+        ['Total lançado', d.totais.valor], ['Notas', d.totais.qtd], ['Valor médio por nota', d.totais.ticketMedio], [], ['Categoria', 'Notas', 'Valor']]
+        .concat(Object.keys(d.porCategoria).map(k => [nomeCat(k), d.porCategoria[k].qtd, d.porCategoria[k].valor]))
+        .concat([[], ['Loja', 'Notas', 'Valor']]).concat(Object.keys(d.porLoja).map(k => [k, d.porLoja[k].qtd, d.porLoja[k].valor]));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resumo), 'Resumo');
+      const notas = [['Lançada em', 'Loja', 'Nota', 'Série', 'Fornecedor', 'CNPJ', 'Categoria', 'Boletos', 'Valor', 'Valor estimado pelos boletos', 'Lançada por', 'Chave de acesso']]
+        .concat(d.itens.map(i => [diaBr(i.data), i.loja, Number(i.numero), Number(i.serie), i.fornecedor, i.cnpj, nomeCat(i.categoria), i.boletos, i.valor, i.estimado ? 'sim' : '', i.lancadoPor, i.chave]));
+      const ws = XLSX.utils.aoa_to_sheet(notas);
+      ws['!cols'] = [{ wch: 11 }, { wch: 12 }, { wch: 9 }, { wch: 6 }, { wch: 32 }, { wch: 20 }, { wch: 26 }, { wch: 8 }, { wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 46 }];
+      XLSX.utils.book_append_sheet(wb, ws, 'Notas');
+      const bytes = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      baixarArquivo(nomeArquivo('Relatorio-notas', f) + '.xlsx', new Uint8Array(bytes), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    } catch (err) { toast(err.message); }
+  });
+}
+$('relExportar').addEventListener('click', e => { const b = e.target.closest('[data-exp]'); if (b) exportarRelatorio(b.dataset.exp, b); });
+
+/* ───────── Contas a pagar ───────── */
+let pagDados = null;
+async function carregarPagar() {
+  aviso($('msgPag'), 'Carregando…', 'info');
+  try {
+    const d = pagDados = await api('financeiro', estado.token, { loja_id: $('pagLoja').value });
+    aviso($('msgPag'), '');
+    const card = (rot, c, corTxt) => '<div class="card resumoCard"><b' + (corTxt ? ' style="color:' + corTxt + '"' : '') + '>' + dinheiro(c.valor) + '</b><span>' + rot + ' · ' + c.qtd + (c.qtd === 1 ? ' boleto' : ' boletos') + '</span></div>';
+    $('pagCards').innerHTML = card('Vencidos sem baixa', d.cards.vencidos, d.cards.vencidos.qtd ? 'var(--bad)' : '') + card('Vence hoje', d.cards.hoje, d.cards.hoje.qtd ? 'var(--warn)' : '') +
+      card('Próximos 7 dias', d.cards.prox7) + card('Próximos 30 dias', d.cards.prox30) + card('Total em aberto', d.cards.emAberto);
+    desenharGrafico('gSemanas', { type: 'bar', data: { labels: d.porSemana.map(s => diaBr(s.inicio).slice(0, 5) + '–' + diaBr(s.fim).slice(0, 5)), datasets: [{ label: 'A pagar', data: d.porSemana.map(s => s.valor), backgroundColor: cor('--accent'), borderRadius: 4 }] },
+      options: { plugins: { legend: { display: false }, tooltip: dicaReais }, scales: { y: eixoReais, x: { grid: { display: false } } } } });
+    const mes = k => ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'][Number(k.slice(5, 7)) - 1] + '/' + k.slice(2, 4);
+    const sets = [{ type: 'bar', label: 'Boletos já registrados', data: d.porMes.map(s => s.valor), backgroundColor: cor('--accent'), borderRadius: 4, order: 2 }];
+    if (d.mediaMensal) sets.push({ type: 'line', label: 'Estimativa (média de compras)', data: d.porMes.map(s => s.estimativa), borderColor: cor('--warn'), backgroundColor: cor('--warn'), borderDash: [6, 4], pointRadius: 3, tension: 0, order: 1 });
+    desenharGrafico('gMeses', { type: 'bar', data: { labels: d.porMes.map(s => mes(s.mes)), datasets: sets },
+      options: { plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: c => ' ' + c.dataset.label + ': ' + dinheiro(c.parsed.y) } } }, scales: { y: eixoReais, x: { grid: { display: false } } } } });
+    $('pagEstimativa').textContent = d.mediaMensal ? 'A linha tracejada é uma estimativa: a média mensal das notas lançadas nos últimos ' + d.mesesDaMedia + ' mês(es) completos (' + dinheiro(d.mediaMensal) + ' por mês). Ela ajuda a prever compras que ainda não chegaram.' : 'A estimativa aparece quando houver pelo menos um mês completo de notas lançadas.';
+    const cats = Object.keys(d.porCategoria);
+    desenharGrafico('gPagCat', { type: 'doughnut', data: { labels: cats.map(nomeCat), datasets: [{ data: cats.map(k => d.porCategoria[k]), backgroundColor: cats.map(k => CORES_CAT[k] || CORES_CAT.SEM), borderColor: cor('--card'), borderWidth: 2 }] },
+      options: { cutout: '62%', plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: c => ' ' + c.label + ': ' + dinheiro(c.parsed) } } } } });
+    $('tbAgenda').innerHTML = d.porDia.filter(x => x.qtd).map(x => '<tr><td>' + diaBr(x.data) + (x.data === d.hoje ? ' <span class="chip warn">hoje</span>' : '') + '</td><td class="mono">' + x.qtd + '</td><td class="mono"><b>' + dinheiro(x.valor) + '</b></td></tr>').join('')
+      || '<tr><td colspan="3" class="vazio">Nenhum boleto vence nos próximos 14 dias.</td></tr>';
+    $('tbPagar').innerHTML = d.lista.length ? d.lista.map(b => {
+      const vencido = b.vencimento && b.vencimento < d.hoje;
+      return '<tr data-id="' + esc(b.notaId) + '"' + (vencido ? ' class="linhaUrgente"' : '') + '><td>' + (b.vencimento ? diaBr(b.vencimento) : '—') + (vencido ? '<span class="chip bad">vencido</span>' : b.vencimento === d.hoje ? '<span class="chip warn">hoje</span>' : '') + '</td>' +
+        '<td>' + esc(b.fornecedor) + '<span class="sub">nota ' + esc(b.numero) + ' · ' + esc(b.loja) + '</span></td><td><span class="chip neutro"><span class="ponto" style="background:' + (CORES_CAT[b.categoria] || CORES_CAT.SEM) + '"></span>' + esc(nomeCat(b.categoria)) + '</span></td>' +
+        '<td class="mono"><b>' + dinheiro(b.valor) + '</b><span class="sub">' + esc(b.banco) + '</span></td>' +
+        '<td><span class="mono linhaDig">' + esc(b.linha) + '</span> <button class="copiar" data-copiar="' + esc(b.linha.replace(/\D/g, '')) + '">Copiar</button></td>' +
+        '<td>' + (d.podePagar ? '<button class="primario copiar" data-pago="' + esc(b.id) + '" data-v="1">Dar baixa</button>' : '<span class="chip neutro">em aberto</span>') + '</td></tr>';
+    }).join('') : '<tr><td colspan="6" class="vazio">Nenhum boleto em aberto.</td></tr>';
+    $('tbPagos').innerHTML = d.pagosRecentes.map(b => '<tr><td>' + esc(b.pagoEm) + '<span class="sub">' + esc(b.pagoPor) + '</span></td><td>' + esc(b.fornecedor) + '<span class="sub">vencia ' + diaBr(b.vencimento) + '</span></td><td class="mono">' + dinheiro(b.valor) + '</td><td>' +
+      (d.podePagar ? '<button class="link" data-pago="' + esc(b.id) + '" data-v="0" style="font-size:12px">desfazer baixa</button>' : '') + '</td></tr>').join('') || '<tr><td colspan="4" class="vazio">Nenhuma baixa ainda.</td></tr>';
+  } catch (err) { aviso($('msgPag'), err.message, 'bad'); }
+}
+$('pagLoja').addEventListener('change', carregarPagar);
+['tbPagar', 'tbPagos'].forEach(t => $(t).addEventListener('click', e => {
+  const b = e.target.closest('[data-pago]');
+  if (b) { ocupado(b, async () => { try { await api('marcarBoletoPago', estado.token, b.dataset.pago, b.dataset.v === '1'); toast(b.dataset.v === '1' ? 'Baixa registrada' : 'Baixa desfeita'); carregarPagar(); } catch (err) { toast(err.message); } }); return; }
+  if (e.target.closest('button, a')) return;
+  const tr = e.target.closest('tr[data-id]'); if (tr) abrirDetalhes(tr.dataset.id);
+}));
+$('pagExportar').addEventListener('click', e => {
+  const b = e.target.closest('[data-exp]'); const d = pagDados; if (!b || !d) return;
+  const fmt = b.dataset.exp;
+  if (fmt === 'pdf') return ocupado(b, async () => { try { toast('Gerando o PDF…'); const r = await api('exportarFinanceiroPdf', estado.token, { loja_id: $('pagLoja').value }); baixarArquivo(r.nome, r.base64, 'application/pdf', true); } catch (err) { toast(err.message); } });
+  if (fmt === 'txt') {
+    const L = ['DONELLI FISCAL - CONTAS A PAGAR', d.filtros.loja + ' | Gerado em ' + d.geradoEm, '',
+      'Vencidos sem baixa: ' + dinheiro(d.cards.vencidos.valor) + ' (' + d.cards.vencidos.qtd + ')', 'Vence hoje: ' + dinheiro(d.cards.hoje.valor), 'Próximos 7 dias: ' + dinheiro(d.cards.prox7.valor), 'Próximos 30 dias: ' + dinheiro(d.cards.prox30.valor), 'Total em aberto: ' + dinheiro(d.cards.emAberto.valor), '',
+      'POR SEMANA'].concat(d.porSemana.map(s => '  ' + diaBr(s.inicio) + ' a ' + diaBr(s.fim) + pad(s.qtd + ' boletos', 14, true) + pad(dinheiro(s.valor), 20, true)))
+      .concat(['', 'BOLETOS EM ABERTO', pad('Vencimento', 12) + pad('Fornecedor', 32) + pad('Nota', 10) + pad('Loja', 14) + pad('Valor', 16, true) + '  Linha digitável', '-'.repeat(140)])
+      .concat(d.lista.map(x => pad(x.vencimento ? diaBr(x.vencimento) : '—', 12) + pad(x.fornecedor, 32) + pad(x.numero, 10) + pad(x.loja, 14) + pad(dinheiro(x.valor), 16, true) + '  ' + x.linha));
+    baixarArquivo('Contas-a-pagar-' + d.hoje + '.txt', '﻿' + L.join('\r\n'), 'text/plain;charset=utf-8');
+    return;
+  }
+  ocupado(b, async () => {
+    try {
+      const XLSX = await carregarExcel();
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Vencimento', 'Fornecedor', 'Nota', 'Loja', 'Categoria', 'Banco', 'Valor', 'Linha digitável']]
+        .concat(d.lista.map(x => [x.vencimento ? diaBr(x.vencimento) : '', x.fornecedor, Number(x.numero), x.loja, nomeCat(x.categoria), x.banco, x.valor, x.linha]))), 'Boletos em aberto');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Semana', 'Boletos', 'Valor']].concat(d.porSemana.map(s => [diaBr(s.inicio) + ' a ' + diaBr(s.fim), s.qtd, s.valor]))
+        .concat([[], ['Mês', 'Boletos registrados', 'Estimativa (média de compras)']]).concat(d.porMes.map(s => [s.mes, s.valor, d.mediaMensal ? s.estimativa : '']))), 'Agenda');
+      baixarArquivo('Contas-a-pagar-' + d.hoje + '.xlsx', new Uint8Array(XLSX.write(wb, { bookType: 'xlsx', type: 'array' })), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    } catch (err) { toast(err.message); }
+  });
+});
+
+/* ───────── Resumo do dia ───────── */
+async function carregarResumo() {
+  if (!$('resDia').value) $('resDia').value = hojeLocal();
+  $('resConteudo').innerHTML = '<div class="vazio">Carregando…</div>';
+  try {
+    const r = await api('resumoDiario', estado.token, $('resDia').value);
+    const item = (rot, val, cls) => '<div class="resItem' + (cls ? ' ' + cls : '') + '"><span>' + rot + '</span><b>' + val + '</b></div>';
+    const lojas = Object.keys(r.recebidas.porLoja).map(k => esc(k) + ': ' + r.recebidas.porLoja[k]).join(' · ') || 'nenhuma';
+    $('resConteudo').innerHTML =
+      '<div class="card"><h3>Recebimento nas lojas</h3>' + item('Notas recebidas', r.recebidas.qtd) + item('Por loja', lojas) +
+        item('Com divergência', r.recebidas.divergencias, r.recebidas.divergencias ? 'warn' : '') + item('Recusadas', r.recebidas.recusadas) + item('Marcadas como urgentes', r.recebidas.urgentes, r.recebidas.urgentes ? 'bad' : '') + '</div>' +
+      '<div class="card"><h3>Lançamento</h3>' + item('Notas lançadas', r.lancadas.qtd) + item('Valor lançado', dinheiro(r.lancadas.valor)) +
+        Object.keys(r.lancadas.porCategoria).map(k => item('&nbsp;&nbsp;' + esc(nomeCat(k)), dinheiro(r.lancadas.porCategoria[k]))).join('') +
+        item('Ainda a lançar', r.pendentes.qtd + (r.pendentes.qtd ? ' (a mais antiga há ' + r.pendentes.diasMaisAntiga + ' dias)' : '')) + item('Urgentes a lançar', r.pendentes.urgentes, r.pendentes.urgentes ? 'bad' : '') + '</div>' +
+      '<div class="card"><h3>Pagamentos</h3>' + item('Vencidos sem baixa', r.boletos.vencidos.qtd + ' · ' + dinheiro(r.boletos.vencidos.valor), r.boletos.vencidos.qtd ? 'bad' : '') +
+        item('Vencem neste dia', r.boletos.vencemNoDia.qtd + ' · ' + dinheiro(r.boletos.vencemNoDia.valor)) + item('Nos 7 dias seguintes', r.boletos.proximos7.qtd + ' · ' + dinheiro(r.boletos.proximos7.valor)) + '</div>';
+  } catch (err) { $('resConteudo').innerHTML = '<div class="aviso bad">' + esc(err.message) + '</div>'; }
+}
+$('resDia').addEventListener('change', carregarResumo);
+
+/* ───────── Configurações: e-mail do resumo e backup (administrador) ───────── */
+$('cfgHora').innerHTML = Array.from({ length: 24 }, (_, h) => '<option value="' + h + '">' + String(h).padStart(2, '0') + ':00</option>').join('');
+async function carregarRotinasCfg() {
+  try {
+    const c = await api('configResumo', estado.token);
+    $('cfgEmails').value = c.emails; $('cfgHora').value = String(c.hora);
+    $('cfgRotinasInfo').innerHTML = 'Último resumo enviado: <b>' + esc(c.ultimoEnvio || 'nenhum ainda') + '</b> · Último backup: <b>' + esc(c.ultimoBackup || 'nenhum ainda') + '</b>' +
+      (c.pastaBackup ? ' · <a href="' + esc(c.pastaBackup) + '" target="_blank" rel="noopener">abrir a pasta de backups no Drive</a>' : '');
+  } catch (err) { aviso($('msgRotinas'), err.message, 'bad'); }
+}
+$('btSalvarRotinas').addEventListener('click', ev => ocupado(ev.currentTarget, async () => {
+  try { await api('salvarResumo', estado.token, { emails: $('cfgEmails').value, hora: $('cfgHora').value }); aviso($('msgRotinas'), 'Salvo. O resumo e o backup rodam todo dia às ' + String($('cfgHora').value).padStart(2, '0') + ':00 (horário de Brasília).', 'ok'); carregarRotinasCfg(); }
+  catch (err) { aviso($('msgRotinas'), err.message, 'bad'); }
+}));
+$('btEnviarResumo').addEventListener('click', ev => ocupado(ev.currentTarget, async () => {
+  try { const n = await api('enviarResumoAgora', estado.token); aviso($('msgRotinas'), 'Resumo de ontem enviado para ' + n + ' e-mail(s).', 'ok'); carregarRotinasCfg(); }
+  catch (err) { aviso($('msgRotinas'), err.message, 'bad'); }
+}));
+$('btBackup').addEventListener('click', ev => ocupado(ev.currentTarget, async () => {
+  aviso($('msgRotinas'), 'Fazendo o backup…', 'info');
+  try { const r = await api('backupAgora', estado.token); aviso($('msgRotinas'), 'Backup criado no Drive: ' + r.criado + '.', 'ok'); carregarRotinasCfg(); }
+  catch (err) { aviso($('msgRotinas'), err.message, 'bad'); }
+}));
+
 /* ───────── Teclado e mouse no computador ───────── */
 const editavel = el => el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
 document.addEventListener('keydown', e => {
-  if ($('telaApp').hidden || $('aba-receber').hidden || !$('modalAval').hidden || !$('modalInstalar').hidden || !$('modalNota').hidden) return;
+  if ($('telaApp').hidden || $('aba-receber').hidden || !$('modalAval').hidden || !$('modalInstalar').hidden || !$('modalNota').hidden || !$('modalLanc').hidden) return;
   // Alt+1/2/3 escolhem a situação
   const sit = { Digit1: 'OK', Digit2: 'DIVERGENCIA', Digit3: 'RECUSADA', Numpad1: 'OK', Numpad2: 'DIVERGENCIA', Numpad3: 'RECUSADA' }[e.code];
   if (e.altKey && !e.ctrlKey && !e.metaKey && sit) {
