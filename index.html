@@ -1205,6 +1205,8 @@ function mod11Arrec(n) {
 }
 function vencimentoPorFator(fator) {
   const f = Number(fator); if (!f) return '';
+  // Mesma regra do servidor: fator abaixo de 1000 = dias contados a partir de 22/02/2025 (alguns emissores).
+  if (f < 1000) return new Date(Date.UTC(2025, 1, 22) + f * 86400000).toISOString().slice(0, 10);
   const dia = 86400000, antigo = Date.UTC(1997, 9, 7) + f * dia, novo = Date.UTC(2025, 1, 22) + (f - 1000) * dia;
   return new Date(Math.abs(novo - Date.now()) < Math.abs(antigo - Date.now()) ? novo : antigo).toISOString().slice(0, 10);
 }
@@ -1751,7 +1753,10 @@ const AVISO_SERVIDOR_BOLETOS = 'Os boletos ainda não estão ligados no servidor
 const mesmoBoleto = (x, b) => b.barras ? x.barras === b.barras : (!x.barras && x.vencimento === b.vencimento && Math.abs(x.valor - b.valor) < 0.005);
 const paraServidor = b => b.barras || { manual: true, vencimento: b.vencimento, valor: b.valor };
 
+/** Vencimento lido do código muito no passado: provavelmente o código traz a data num formato diferente. */
+const vencimentoEstranho = b => b.barras && b.vencimento && b.vencimento < (() => { const d = new Date(); d.setDate(d.getDate() - 60); return d.toISOString().slice(0, 10); })();
 async function adicionarBoletoLido(b) {
+  if (vencimentoEstranho(b)) toast('Confira o vencimento: o código indica ' + diaBr(b.vencimento) + '. Se estiver errado, corrija nos detalhes da nota.');
   if (!servidorNaVersao('1.9.0')) { bip(false); aviso($('msgBip'), AVISO_SERVIDOR_BOLETOS, 'warn'); return; }
   if (estado.notaPend) {
     if (estado.boletosPend.some(x => mesmoBoleto(x, b))) { bip(false); aviso($('msgBip'), 'Este boleto já foi informado para esta nota.', 'warn'); return; }
@@ -2315,6 +2320,7 @@ function baixarArquivo(nome, conteudo, tipo, emBase64) {
 const PORTAL_NFE = 'https://www.nfe.fazenda.gov.br/portal/consultaRecaptcha.aspx?tipoConsulta=resumo&tipoConteudo=7PhJ+gAVw2g=';
 
 async function abrirDetalhes(id) {
+  estado.vencEditando = '';
   if (!servidorNaVersao('1.9.0')) { toast('Detalhes da nota: o administrador precisa publicar o Code.gs 1.9.0 no Google.'); return; }
   estado.detId = id;
   $('detConteudo').innerHTML = '<div class="vazio">Carregando…</div>';
@@ -2362,7 +2368,10 @@ function desenharDetalhes(d) {
 
     '<h3>Boletos ' + (bol.length ? '(' + bol.length + ' · ' + dinheiro(totalBol) + ')' : '') + '</h3>' +
     (bol.length ? '<div class="tabela"><table class="resp"><thead><tr><th>Parcela</th><th>Vencimento</th><th>Valor</th><th>Banco</th><th data-largo>Linha digitável</th><th></th></tr></thead><tbody>' +
-      bol.map(b => '<tr><td class="mono">' + esc(b.parcela) + '</td><td>' + (b.vencimento ? diaBr(b.vencimento) : '—') + '</td><td class="mono"><b>' + dinheiro(b.valor) + '</b></td><td>' + esc(b.banco) + '</td>' +
+      bol.map(b => '<tr><td class="mono">' + esc(b.parcela) + '</td><td>' + (b.vencimento ? diaBr(b.vencimento) : '—') +
+        (servidorNaVersao('6.2') ? (estado.vencEditando === b.id
+          ? '<span class="sub" style="display:flex;gap:4px;margin-top:4px"><input type="date" id="detVencNovo" value="' + esc(b.vencimento || '') + '" style="padding:4px 6px;font-size:13px"><button type="button" class="primario copiar" data-venc-salvar="' + esc(b.id) + '">OK</button></span>'
+          : '<button class="link" data-venc-editar="' + esc(b.id) + '" style="font-size:12px;display:block">corrigir</button>') : '') + '</td><td class="mono"><b>' + dinheiro(b.valor) + '</b></td><td>' + esc(b.banco) + '</td>' +
         '<td>' + (b.linha ? '<span class="mono linhaDig">' + esc(b.linha) + '</span> <button class="copiar" data-copiar="' + esc(b.linha.replace(/\D/g, '')) + '">Copiar</button>' : '<span class="muted">sem código (digitado à mão)</span>') + '</td>' +
         '<td><button class="link" data-det-rem="' + esc(b.id) + '" style="font-size:12px">remover</button></td></tr>').join('') +
       '</tbody></table></div>' : '<div class="muted" style="font-size:13px">Nenhum boleto registrado para esta nota.</div>') +
@@ -2473,6 +2482,20 @@ async function acaoDetalhe(acao, botao) {
 }
 
 $('detConteudo').addEventListener('click', e => {
+  const ve = e.target.closest('[data-venc-editar]');
+  if (ve) { estado.vencEditando = ve.dataset.vencEditar; api('detalhesNota', estado.token, estado.detId).then(desenharDetalhes).catch(err => aviso($('msgDet'), err.message, 'bad')); return; }
+  const vs = e.target.closest('[data-venc-salvar]');
+  if (vs) {
+    ocupado(vs, async () => {
+      try {
+        await api('corrigirVencimentoBoleto', estado.token, vs.dataset.vencSalvar, $('detVencNovo').value);
+        estado.vencEditando = ''; toast('Vencimento corrigido');
+        desenharDetalhes(await api('detalhesNota', estado.token, estado.detId));
+        if (!$('aba-notas').hidden) carregarNotas();
+      } catch (err) { aviso($('msgDet'), err.message, 'bad'); }
+    });
+    return;
+  }
   const a = e.target.closest('[data-det-acao]');
   if (a) { acaoDetalhe(a.dataset.detAcao, a); return; }
   const r = e.target.closest('[data-det-rem]');
