@@ -432,6 +432,24 @@
   .cpResumo span { font-size: 12px; color: var(--muted); }
   .protocolo { font-family: var(--mono); font-weight: 700; font-size: 15px; }
   .confObs { font-size: 13px; }
+
+  /* v6.0 */
+  .sinoItem.alerta { border-left-color: var(--warn); }
+  .sinoItem.alerta b { color: var(--warn); }
+  .naoRecCard { border-color: var(--warn); }
+  .naoRecCard h2 { color: var(--warn); }
+  .naoRecLinha { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: baseline; font-size: 13.5px; padding: 6px 0; border-top: 1px solid var(--line); }
+  .justForm { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; margin-top: 6px; }
+  .justForm select, .justForm input { padding: 6px 8px; font-size: 13.5px; }
+  @media (max-width: 700px) { .justForm { grid-template-columns: 1fr; } }
+  .indCards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .indCards div { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 2px; }
+  .indCards b { font-size: 22px; font-variant-numeric: tabular-nums; }
+  .indCards span { font-size: 12px; color: var(--muted); }
+  .barra { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 4px; min-width: 60px; }
+  .barra i { display: block; height: 100%; background: var(--warn); }
+  .barra.ok i { background: var(--accent); }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
@@ -610,6 +628,11 @@
         <div id="filaBox" class="fila" hidden></div>
       </div>
 
+      <div class="card naoRecCard" id="cardNaoRec" hidden>
+        <div><h2 id="naoRecTitulo"></h2><div class="muted" id="naoRecTexto" style="font-size:13px"></div></div>
+        <div id="naoRecLista"></div>
+      </div>
+
       <div class="card">
         <div class="detTopo"><h2>Últimos registros da loja</h2><button type="button" class="link soV5" data-ir-aba="comprovante">Comprovante de envio</button></div>
         <div class="tabela"><table class="resp recolhido" id="tabUltimas">
@@ -686,7 +709,7 @@
           <label>Loja<select id="fLoja"></select></label>
           <label>Lançamento<select id="fLanc"><option value="PENDENTE">A lançar</option><option value="LANCADA">Lançadas</option><option value="">Todas</option></select></label>
           <label>Situação<select id="fSit"><option value="">Todas</option><option value="OK">Chegou OK</option><option value="DIVERGENCIA">Divergência</option><option value="RECUSADA">Recusada</option></select></label>
-          <label>Conferência<select id="fVal"><option value="">Todas</option><option value="CONFERIDA">Loja certa</option><option value="AGUARDANDO">Aguardando Sysmo</option><option value="DESTINO_ERRADO">Loja errada</option><option value="FIN_DIV" class="soV5">Boleto diverge da nota</option><option value="FIN_PEND" class="soV5">Boleto não estava em mãos</option></select></label>
+          <label>Conferência<select id="fVal"><option value="">Todas</option><option value="CONFERIDA">Loja certa</option><option value="AGUARDANDO">Aguardando Sysmo</option><option value="DESTINO_ERRADO">Loja errada</option><option value="BOL_VENCE" class="soV6">Boleto vencendo e nota não lançada</option><option value="FIN_DIV" class="soV5">Boleto diverge da nota</option><option value="FIN_PEND" class="soV5">Boleto não estava em mãos</option></select></label>
           <label>Período<select id="fDias"><option value="7">7 dias</option><option value="30" selected>30 dias</option><option value="90">90 dias</option><option value="0">Tudo</option><option value="livre" class="soV3">De… até…</option></select></label>
           <label id="lblFIni" hidden>De<input type="date" id="fIni"></label>
           <label id="lblFFim" hidden>Até<input type="date" id="fFim"></label>
@@ -706,13 +729,19 @@
     <div id="aba-faltam" class="aba" hidden>
       <div class="card">
         <div>
-          <h2>Notas na Sysmo que nenhuma loja bipou</h2>
-          <div class="muted" style="font-size:13px">Pode ser mercadoria que não chegou, ou nota recebida e esquecida. As mais antigas aparecem primeiro.</div>
+          <h2>Notas emitidas para as lojas e não recebidas</h2>
+          <div class="muted" style="font-size:13px" id="faltamDica">Pode ser mercadoria que não chegou, ou nota recebida e esquecida. As mais antigas aparecem primeiro.</div>
         </div>
-        <div class="tabela"><table class="resp">
-          <thead><tr><th>Loja</th><th>Nota</th><th>Fornecedor</th><th>Emissão</th><th>Na base desde</th><th data-largo>Chave</th></tr></thead>
+        <div class="linha soV6">
+          <label style="flex:0 1 260px">Mostrar<select id="faltamFiltro"><option value="atrasadas">Atrasadas (alerta ligado)</option><option value="todas">Todas não recebidas</option><option value="justificadas">Justificadas</option></select></label>
+          <label style="flex:0 1 220px">Loja<select id="faltamLoja"></select></label>
+          <div class="muted" id="faltamTotal" style="font-size:13px;flex:1 1 200px;align-self:center"></div>
+        </div>
+        <div class="tabela"><table class="resp" id="tabFaltam">
+          <thead id="thFaltam"><tr><th>Loja</th><th>Nota</th><th>Fornecedor</th><th>Emissão</th><th>Na base desde</th><th data-largo>Chave</th></tr></thead>
           <tbody id="tbFaltam"></tbody>
         </table></div>
+        <div id="msgFaltam" class="aviso" hidden></div>
       </div>
     </div>
 
@@ -734,6 +763,7 @@
         <button type="button" data-rel="notas">Notas lançadas</button>
         <button type="button" data-rel="pagar">Contas a pagar</button>
         <button type="button" data-rel="resumo">Resumo do dia</button>
+        <button type="button" data-rel="painel" class="soV6">Indicadores</button>
       </div>
 
       <section id="rel-notas" class="aba" style="padding:0">
@@ -800,6 +830,15 @@
           <div class="muted" style="font-size:13px;flex:1 1 260px">O mesmo resumo é enviado por e-mail todo dia, com o movimento do dia anterior. Os e-mails são definidos pelo administrador em Configurações.</div>
         </div></div>
         <div id="resConteudo"></div>
+      </section>
+
+      <section id="rel-painel" class="aba" style="padding:0" hidden>
+        <div class="card"><div class="linha" style="align-items:end">
+          <label style="flex:0 1 200px">Período<select id="pnPeriodo"><option value="7">Últimos 7 dias</option><option value="30" selected>Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="180">Últimos 6 meses</option><option value="365">Últimos 12 meses</option></select></label>
+          <label style="flex:0 1 220px">Loja<select id="pnLoja"></select></label>
+          <div class="muted" id="pnInfo" style="font-size:13px;flex:1 1 220px;align-self:center"></div>
+        </div></div>
+        <div id="pnConteudo" style="display:grid;gap:16px"></div>
       </section>
     </div>
 
@@ -870,6 +909,17 @@
         <label>Link do app (para o atalho)<input id="cfgApp" class="mono" placeholder="https://script.google.com/macros/s/.../exec"></label>
         <div><button id="btAtalho" class="primario">Salvar</button></div>
         <div id="msgAtalho" class="aviso" hidden></div>
+      </div>
+
+      <div class="card soV6">
+        <div><h2>Alertas</h2>
+          <div class="muted" style="font-size:13px">Avisos no sino e no resumo diário por e-mail: boletos que vão vencer com a nota ainda não lançada (para o financeiro e a analista) e notas emitidas para as lojas que ninguém recebeu (para a analista, o financeiro e o gerente da loja).</div></div>
+        <div class="linha" style="align-items:end">
+          <label style="flex:1 1 220px">Avisar boleto que vence em até (dias)<input type="number" id="cfgDiasBol" min="0" max="30" inputmode="numeric"></label>
+          <label style="flex:1 1 220px">Avisar nota não recebida depois de (dias da emissão)<input type="number" id="cfgDiasNR" min="1" max="60" inputmode="numeric"></label>
+          <button type="button" id="btSalvarAlertas" class="primario" style="flex:0 0 auto">Salvar</button>
+        </div>
+        <div id="msgAlertas" class="aviso" hidden></div>
       </div>
 
       <div class="card soV5" style="border-color:var(--bad)">
@@ -1528,7 +1578,7 @@ const ABAS = [
   { id: 'notas', nome: 'Notas recebidas', ok: c => ['ANALISTA', 'ADMIN', 'GERENTE', 'FINANCEIRO'].indexOf(c.usuario.perfil) >= 0 },
   { id: 'relatorios', nome: 'Relatórios', ok: c => ['ANALISTA', 'ADMIN', 'GERENTE', 'FINANCEIRO'].indexOf(c.usuario.perfil) >= 0 },
   { id: 'cd', nome: 'Centro de distribuição', ok: c => ['LOJA', 'GERENTE', 'ANALISTA', 'ADMIN'].indexOf(c.usuario.perfil) >= 0 && servidorNaVersao('5.0') },
-  { id: 'faltam', nome: 'Não bipadas', ok: c => ['ANALISTA', 'ADMIN', 'GERENTE'].indexOf(c.usuario.perfil) >= 0 },
+  { id: 'faltam', nome: 'Não recebidas', ok: c => ['ANALISTA', 'ADMIN', 'GERENTE'].indexOf(c.usuario.perfil) >= 0 || (c.usuario.perfil === 'FINANCEIRO' && servidorNaVersao('6.0')) },
   { id: 'usuarios', nome: 'Usuários', ok: c => c.usuario.perfil === 'ADMIN' },
   { id: 'avaliacoes', nome: 'Avaliações', ok: c => c.usuario.perfil === 'ADMIN' },
   { id: 'config', nome: 'Configurações', ok: c => c.usuario.perfil === 'ADMIN' },
@@ -1574,6 +1624,7 @@ function irPara(aba) {
 /* ───────── Receber ───────── */
 function abrirReceber() {
   carregarUltimas();
+  carregarNaoRecebidasLoja();
   if (toque) carregarZXing();
   if (cam.quer && guardar.get('nfe_camera') !== 'foto') abrirCamera();
   setTimeout(focarChave, 50);
@@ -2006,8 +2057,9 @@ async function carregarNotas() {
       ['Divergências a tratar', s.divergencias, { fLanc: 'PENDENTE', fSit: 'DIVERGENCIA', fVal: '' }],
       ['Aguardando Sysmo', s.aguardando, { fLanc: '', fSit: '', fVal: 'AGUARDANDO' }],
       ['Bipadas na loja errada', s.destinoErrado, { fLanc: '', fSit: '', fVal: 'DESTINO_ERRADO' }],
-    ].concat(servidorNaVersao('5.0') ? [['Boleto × nota divergente', s.divFinanceira || 0], ['Boleto não estava em mãos', s.semBoletoEmMaos || 0]] : []).map((c, i) => '<button data-i="' + i + '"' + (i === 0 && c[1] > 0 ? ' style="border-color:var(--bad)"' : '') + '><b' + (i === 0 && c[1] > 0 ? ' style="color:var(--bad)"' : '') + '>' + c[1] + '</b><span>' + c[0] + '</span></button>').join('');
-    const filtros = [{ fLanc: 'PENDENTE', fSit: '', fVal: '' }, { fLanc: 'PENDENTE', fSit: '', fVal: '' }, { fLanc: 'PENDENTE', fSit: 'DIVERGENCIA', fVal: '' }, { fLanc: '', fSit: '', fVal: 'AGUARDANDO' }, { fLanc: '', fSit: '', fVal: 'DESTINO_ERRADO' }, { fLanc: '', fSit: '', fVal: 'FIN_DIV' }, { fLanc: '', fSit: '', fVal: 'FIN_PEND' }];
+    ].concat(servidorNaVersao('5.0') ? [['Boleto × nota divergente', s.divFinanceira || 0], ['Boleto não estava em mãos', s.semBoletoEmMaos || 0]] : [])
+     .concat(servidorNaVersao('6.0') ? [['Boleto vencendo e nota não lançada', s.boletoVencendo || 0]] : []).map((c, i) => '<button data-i="' + i + '"' + (i === 0 && c[1] > 0 ? ' style="border-color:var(--bad)"' : '') + '><b' + (i === 0 && c[1] > 0 ? ' style="color:var(--bad)"' : '') + '>' + c[1] + '</b><span>' + c[0] + '</span></button>').join('');
+    const filtros = [{ fLanc: 'PENDENTE', fSit: '', fVal: '' }, { fLanc: 'PENDENTE', fSit: '', fVal: '' }, { fLanc: 'PENDENTE', fSit: 'DIVERGENCIA', fVal: '' }, { fLanc: '', fSit: '', fVal: 'AGUARDANDO' }, { fLanc: '', fSit: '', fVal: 'DESTINO_ERRADO' }, { fLanc: '', fSit: '', fVal: 'FIN_DIV' }, { fLanc: '', fSit: '', fVal: 'FIN_PEND' }, { fLanc: '', fSit: '', fVal: 'BOL_VENCE' }];
     $('resumo').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
       const f = filtros[b.dataset.i]; Object.keys(f).forEach(k => { $(k).value = f[k]; }); $('fDias').value = '0'; $('fDias').dispatchEvent(new Event('change')); carregarNotas();
     }));
@@ -2017,7 +2069,7 @@ async function carregarNotas() {
         (n.urgente && n.lancamento !== 'LANCADA' ? '<span class="chip urgente">URGENTE</span>' : '') + '</td>' +
       '<td>' + esc(n.loja) + '</td>' +
       '<td class="mono">' + esc(n.numero) + '/' + esc(n.serie) + '<span class="sub">' + (n.fornecedorNome ? esc(n.fornecedorNome) + ' · ' : '') + esc(n.cnpjEmitente) + '</span>' + (n.categoria && n.lancamento !== 'LANCADA' ? '<span class="sub">tipo: ' + esc(nomeCat(n.categoria)) + '</span>' : '') + '<button class="link" data-detalhes="' + esc(n.id) + '" style="font-size:12px">ver detalhes</button></td>' +
-      '<td>' + resumoBoletosCel(n.boletos) + chipsFinanceiro(n) + (n.confFinanceira === 'DIVERGENTE' ? '<span class="sub">' + esc(n.confObs.length > 140 ? n.confObs.slice(0, 140) + '…' : n.confObs) + '</span>' : '') + '</td>' +
+      '<td>' + resumoBoletosCel(n.boletos) + (n.boletoVencendo ? '<span class="chip bad">Boleto vencendo</span>' : '') + chipsFinanceiro(n) + (n.confFinanceira === 'DIVERGENTE' ? '<span class="sub">' + esc(n.confObs.length > 140 ? n.confObs.slice(0, 140) + '…' : n.confObs) + '</span>' : '') + '</td>' +
       '<td><div class="chaveCel">' + esc(n.chave) + '</div><button class="copiar" data-copiar="' + esc(n.chave) + '">Copiar</button></td>' +
       '<td>' + chip(SIT, n.situacao) + (n.tipo ? '<span class="sub">' + esc(n.tipo) + '</span>' : '') + (n.observacao ? '<span class="sub">“' + esc(n.observacao) + '”</span>' : '') + '</td>' +
       '<td>' + chip(VAL, n.validacao) + (n.validacao === 'DESTINO_ERRADO' ? '<span class="sub">nota é do CNPJ ' + esc(n.cnpjDestinatario) + '</span>' : '') + '</td>' +
@@ -2047,9 +2099,8 @@ document.addEventListener('click', e => {
   });
 });
 
-async function carregarFaltam() {
+async function carregarFaltamAntigo() {
   const tb = $('tbFaltam');
-  tb.innerHTML = '<tr><td colspan="6" class="vazio">Carregando…</td></tr>';
   try {
     const itens = await api('naoRecebidas', estado.token);
     tb.innerHTML = itens.length ? itens.map(n =>
@@ -2118,6 +2169,7 @@ $('btNovaLoja').addEventListener('click', () => desenharLojas(estado.ctx.lojas.c
 
 async function carregarConfig() {
   desenharLojas(estado.ctx.lojas);
+  carregarAlertasCfg();
   carregarRotinasCfg();
   carregarAtalho();
   try {
@@ -2565,19 +2617,21 @@ function abrirRelatorios(sub) {
     aviso($('msgRel'), 'Os relatórios precisam do servidor na versão 2.0.0: o administrador deve publicar o Code.gs 2.0.0 no Google (Gerenciar implantações → Nova versão).', 'warn');
     return;
   }
-  const pode = { notas: true, pagar: true, resumo: temPerfil('ADMIN', 'ANALISTA') };
+  const pode = { notas: true, pagar: true, resumo: temPerfil('ADMIN', 'ANALISTA'), painel: servidorNaVersao('6.0') };
   $('relSeg').querySelector('[data-rel="resumo"]').hidden = !pode.resumo;
+  $('relSeg').querySelector('[data-rel="painel"]').hidden = !pode.painel;
   relAtual = sub && pode[sub] ? sub : (relAtual && pode[relAtual] ? relAtual : 'notas');
   $('relSeg').querySelectorAll('button').forEach(b => b.classList.toggle('ativa', b.dataset.rel === relAtual));
-  ['notas', 'pagar', 'resumo'].forEach(k => { $('rel-' + k).hidden = k !== relAtual; });
+  ['notas', 'pagar', 'resumo', 'painel'].forEach(k => { $('rel-' + k).hidden = k !== relAtual; });
   const lojaFixa = temPerfil('GERENTE');
-  [$('relLoja'), $('pagLoja')].forEach(s => {
+  [$('relLoja'), $('pagLoja'), $('pnLoja')].forEach(s => {
     s.innerHTML = (lojaFixa ? '' : '<option value="">Todas as lojas</option>') + estado.ctx.lojas.filter(l => !lojaFixa || l.id === estado.ctx.usuario.loja_id).map(l => '<option value="' + esc(l.id) + '">' + esc(l.nome) + '</option>').join('');
     s.disabled = lojaFixa;
   });
   if (relAtual === 'notas') carregarRelatorio();
   if (relAtual === 'pagar') carregarPagar();
   if (relAtual === 'resumo') carregarResumo();
+  if (relAtual === 'painel') carregarPainel();
 }
 $('relSeg').addEventListener('click', e => { const b = e.target.closest('[data-rel]'); if (b) abrirRelatorios(b.dataset.rel); });
 
@@ -2728,7 +2782,7 @@ async function carregarPagar() {
     $('tbPagar').innerHTML = d.lista.length ? d.lista.map(b => {
       const vencido = b.vencimento && b.vencimento < d.hoje;
       return '<tr data-id="' + esc(b.notaId) + '"' + (vencido ? ' class="linhaUrgente"' : '') + '><td>' + (b.vencimento ? diaBr(b.vencimento) : '—') + (vencido ? '<span class="chip bad">vencido</span>' : b.vencimento === d.hoje ? '<span class="chip warn">hoje</span>' : '') + '</td>' +
-        '<td>' + esc(b.fornecedor) + '<span class="sub">nota ' + esc(b.numero) + ' · ' + esc(b.loja) + '</span></td><td><span class="chip neutro"><span class="ponto" style="background:' + (CORES_CAT[b.categoria] || CORES_CAT.SEM) + '"></span>' + esc(nomeCat(b.categoria)) + '</span></td>' +
+        '<td>' + esc(b.fornecedor) + '<span class="sub">nota ' + esc(b.numero) + ' · ' + esc(b.loja) + '</span>' + (b.naoLancada ? '<span class="chip warn">Nota não lançada</span>' : '') + '</td><td><span class="chip neutro"><span class="ponto" style="background:' + (CORES_CAT[b.categoria] || CORES_CAT.SEM) + '"></span>' + esc(nomeCat(b.categoria)) + '</span></td>' +
         '<td class="mono"><b>' + dinheiro(b.valor) + '</b><span class="sub">' + esc(b.banco) + '</span></td>' +
         '<td>' + (b.linha ? '<span class="mono linhaDig">' + esc(b.linha) + '</span> <button class="copiar" data-copiar="' + esc(b.linha.replace(/\D/g, '')) + '">Copiar</button>' : '<span class="muted">sem código</span>') + '</td>' +
         '<td>' + (d.podePagar ? '<button class="primario copiar" data-pago="' + esc(b.id) + '" data-v="1">Dar baixa</button>' : '<span class="chip neutro">em aberto</span>') + '</td></tr>';
@@ -2825,6 +2879,7 @@ function aplicarVersaoServidor() {
   document.querySelectorAll('.soV3').forEach(el => { el.hidden = !v3; });
   document.querySelectorAll('.soV4').forEach(el => { el.hidden = !servidorNaVersao('4.0'); });
   document.querySelectorAll('.soV5').forEach(el => { el.hidden = !servidorNaVersao('5.0'); });
+  document.querySelectorAll('.soV6').forEach(el => { el.hidden = !servidorNaVersao('6.0'); });
   atualizarCartao();
   if (!v3 && $('fDias').value === 'livre') $('fDias').value = '30';
 }
@@ -3060,9 +3115,11 @@ function desenharSino() {
   $('sinoBadge').hidden = !n; $('sinoBadge').textContent = n > 9 ? '9+' : n;
   if ($('sinoPainel').hidden) return;
   $('sinoPainel').innerHTML = n ? sinoAvisos.map(a =>
-    '<div class="sinoItem ' + (a.tipo === 'URGENTE_LANCADA' ? 'ok' : '') + '">' +
+    '<div class="sinoItem ' + (a.tipo === 'URGENTE_LANCADA' ? 'ok' : a.tipo === 'NAO_RECEBIDA' ? 'alerta' : '') + '">' +
     '<b>' + esc(a.titulo) + '</b><span>' + esc(a.texto) + '</span><span class="quando muted">' + esc(a.quando) + '</span>' +
     (a.tipo === 'URGENTE_LANCADA' ? '<button class="copiar" data-aviso-ok="' + esc(a.id) + '">OK, entendi</button>'
+      : a.tipo === 'BOLETO_SEM_LANCAMENTO' ? '<button class="primario copiar" data-sino-nota="' + esc(a.notaId) + '">Ver a nota</button>'
+      : a.tipo === 'NAO_RECEBIDA' ? (estado.ctx.usuario.perfil === 'LOJA' ? '' : '<button class="primario copiar" data-sino-faltam="1">Ver não recebidas</button>')
       : '<button class="primario copiar" data-ir-nota="' + esc(a.id) + '">Ver para lançar</button>') + '</div>'
   ).join('') : '<div class="sinoVazio">Nenhuma notificação no momento.</div>';
 }
@@ -3081,6 +3138,10 @@ document.addEventListener('click', e => {
     try { await api('confirmarAviso', estado.token, ok.dataset.avisoOk); await puxarNotificacoes(); }
     catch (err) { toast(err.message); }
   });
+  const sn = e.target.closest('[data-sino-nota]');
+  if (sn) { $('sinoPainel').hidden = true; abrirDetalhes(sn.dataset.sinoNota); return; }
+  const sf = e.target.closest('[data-sino-faltam]');
+  if (sf) { $('sinoPainel').hidden = true; irPara('faltam'); return; }
   const ir = e.target.closest('[data-ir-nota]');
   if (ir) {
     $('sinoPainel').hidden = true;
@@ -3621,6 +3682,140 @@ $('btLimpar').addEventListener('click', e => ocupado(e.currentTarget, async () =
 }));
 
 document.addEventListener('click', e => { const b = e.target.closest('[data-ir-aba]'); if (b) irPara(b.dataset.irAba); });
+
+/* ───────── Versão 6.0: alertas e indicadores ───────── */
+const fmtHoras = h => h == null ? '—' : h < 1 ? Math.round(h * 60) + ' min' : h < 48 ? h.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' h' : (h / 24).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' dias';
+const pct = x => (x * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + '%';
+let faltamDados = null, justAberta = '';
+
+async function carregarFaltam() {
+  const tb = $('tbFaltam');
+  tb.innerHTML = '<tr><td colspan="6" class="vazio">Carregando…</td></tr>';
+  if (!servidorNaVersao('6.0')) return carregarFaltamAntigo();
+  const fixa = temPerfil('GERENTE', 'LOJA');
+  if (!$('faltamLoja').options.length) $('faltamLoja').innerHTML = (fixa ? '' : '<option value="">Todas</option>') + estado.ctx.lojas.filter(l => !fixa || l.id === estado.ctx.usuario.loja_id).map(l => '<option value="' + esc(l.id) + '">' + esc(l.nome) + '</option>').join('');
+  $('faltamLoja').disabled = fixa;
+  try { faltamDados = await api('naoRecebidas', estado.token, {}); desenharFaltam(); }
+  catch (err) { tb.innerHTML = '<tr><td colspan="6" class="vazio">' + esc(err.message) + '</td></tr>'; }
+}
+function desenharFaltam() {
+  const d = faltamDados, f = $('faltamFiltro').value, loja = $('faltamLoja').value;
+  $('faltamDica').textContent = 'Notas que chegaram à base da Sysmo (XML) e que nenhuma loja leu. O alerta liga ' + d.cfg.diasNaoRecebida + (d.cfg.diasNaoRecebida === 1 ? ' dia' : ' dias') + ' depois da emissão. Antes de pagar, confira se a mercadoria chegou.';
+  const itens = d.itens.filter(n => (!loja || n.lojaId === loja) && (f === 'todas' || (f === 'justificadas' ? n.justificada : n.atrasada && !n.justificada)));
+  const valor = itens.reduce((s, n) => s + n.valor, 0);
+  $('faltamTotal').textContent = itens.length + (itens.length === 1 ? ' nota' : ' notas') + (valor ? ' · ' + dinheiro(valor) : '');
+  $('thFaltam').innerHTML = '<tr><th>Loja</th><th>Nota</th><th>Emissão</th><th>Valor e vencimento</th><th>Situação</th><th data-largo>Chave</th></tr>';
+  $('tbFaltam').innerHTML = itens.length ? itens.map(n => {
+    const sit = n.justificada
+      ? '<span class="chip neutro">' + esc(n.alertaNome) + '</span><span class="sub">' + esc(n.alertaPor) + ' · ' + esc(n.alertaEm) + (n.alertaAte ? ' · avisa de novo em ' + esc(n.alertaAte) : '') + (n.alertaObs ? ' · “' + esc(n.alertaObs) + '”' : '') + '</span>' +
+        (d.podeJustificar ? '<button type="button" class="link" data-just-desfazer="' + esc(n.chave) + '" style="font-size:12px">desfazer</button>' : '')
+      : (n.atrasada ? '<span class="chip bad">Não recebida há ' + n.dias + ' dias</span>' : '<span class="chip neutro">No prazo</span>') +
+        (d.podeJustificar ? (justAberta === n.chave
+          ? '<div class="justForm"><select data-just-motivo><option value="">Motivo…</option>' + Object.keys(d.motivos).map(k => '<option value="' + k + '">' + esc(d.motivos[k]) + '</option>').join('') + '</select>' +
+            '<input data-just-obs maxlength="300" placeholder="Observação"><button type="button" class="primario copiar" data-just-salvar="' + esc(n.chave) + '">Salvar</button></div>'
+          : '<button type="button" class="link" data-just-abrir="' + esc(n.chave) + '" style="font-size:12px">justificar</button>') : '');
+    return '<tr' + (n.atrasada && !n.justificada ? ' class="linhaUrgente"' : '') + '><td>' + esc(n.loja) + '</td>' +
+      '<td><span class="mono">' + esc(n.numero) + '/' + esc(n.serie) + '</span><span class="sub">' + esc(n.fornecedor || n.cnpjEmitente) + '</span></td>' +
+      '<td>' + esc(n.emissaoBr) + '<span class="sub">' + (n.dataEstimada ? 'chegou à base há ' : 'há ') + n.dias + (n.dias === 1 ? ' dia' : ' dias') + '</span></td>' +
+      '<td>' + (n.valor ? '<b class="mono">' + dinheiro(n.valor) + '</b>' : '<span class="muted">—</span>') + (n.proxVencimento ? '<span class="sub">1º vencimento ' + diaBr(n.proxVencimento) + (n.parcelas > 1 ? ' · ' + n.parcelas + ' parcelas' : '') + '</span>' : '') + '</td>' +
+      '<td>' + sit + '</td>' +
+      '<td><div class="chaveCel">' + esc(n.chave) + '</div><button class="copiar" data-copiar="' + esc(n.chave) + '">Copiar</button></td></tr>';
+  }).join('') : '<tr><td colspan="6" class="vazio">' + (f === 'atrasadas' ? 'Nenhuma nota atrasada. 👍' : 'Nada nesta lista.') + '</td></tr>';
+  rotularTabela($('tabFaltam'));
+}
+['faltamFiltro', 'faltamLoja'].forEach(id => $(id).addEventListener('change', () => faltamDados && desenharFaltam()));
+$('tbFaltam').addEventListener('click', e => {
+  const ab = e.target.closest('[data-just-abrir]');
+  if (ab) { justAberta = ab.dataset.justAbrir; desenharFaltam(); return; }
+  const sv = e.target.closest('[data-just-salvar], [data-just-desfazer]');
+  if (!sv) return;
+  const chave = sv.dataset.justSalvar || sv.dataset.justDesfazer;
+  const linha = sv.closest('tr');
+  const motivo = sv.dataset.justSalvar ? linha.querySelector('[data-just-motivo]').value : '';
+  const obs = sv.dataset.justSalvar ? linha.querySelector('[data-just-obs]').value : '';
+  if (sv.dataset.justSalvar && !motivo) { aviso($('msgFaltam'), 'Escolha o motivo.', 'bad'); return; }
+  ocupado(sv, async () => {
+    try {
+      await api('justificarNaoRecebida', estado.token, chave, motivo, obs);
+      justAberta = ''; aviso($('msgFaltam'), '');
+      toast(motivo ? 'Justificada. O alerta desta nota foi desligado.' : 'Justificativa desfeita');
+      await carregarFaltam(); puxarNotificacoes();
+    } catch (err) { aviso($('msgFaltam'), err.message, 'bad'); }
+  });
+});
+
+/** Card na tela de receber (loja e gerente): notas da loja emitidas há dias e ainda não lidas. */
+async function carregarNaoRecebidasLoja() {
+  if (!servidorNaVersao('6.0') || !temPerfil('LOJA', 'GERENTE')) { $('cardNaoRec').hidden = true; return; }
+  try {
+    const d = await api('naoRecebidas', estado.token, {});
+    const at = d.itens.filter(n => n.atrasada && !n.justificada);
+    $('cardNaoRec').hidden = !at.length;
+    if (!at.length) return;
+    $('naoRecTitulo').textContent = '⚠ ' + at.length + (at.length === 1 ? ' nota emitida para a loja e não recebida' : ' notas emitidas para a loja e não recebidas');
+    $('naoRecTexto').textContent = 'Emitidas há ' + d.cfg.diasNaoRecebida + ' dias ou mais. Se a mercadoria chegou, leia a nota agora. Se não chegou, avise o gerente.';
+    $('naoRecLista').innerHTML = at.slice(0, 6).map(n => '<div class="naoRecLinha"><span class="mono">' + esc(n.numero) + '</span><span>' + esc(n.fornecedor || n.cnpjEmitente) + '<span class="sub">emitida em ' + esc(n.emissaoBr) + ' · há ' + n.dias + ' dias</span></span><b class="mono">' + (n.valor ? dinheiro(n.valor) : '') + '</b></div>').join('') +
+      (at.length > 6 ? '<div class="muted" style="font-size:13px">e mais ' + (at.length - 6) + '…</div>' : '') +
+      (temPerfil('GERENTE') ? '<button type="button" class="link" data-ir-aba="faltam" style="justify-self:start">Ver todas e justificar</button>' : '');
+  } catch (e) { $('cardNaoRec').hidden = true; }
+}
+
+/* Configurações: alertas */
+async function carregarAlertasCfg() {
+  if (!servidorNaVersao('6.0')) return;
+  try { const c = await api('configAlertas', estado.token); $('cfgDiasBol').value = c.diasBoleto; $('cfgDiasNR').value = c.diasNaoRecebida; }
+  catch (err) { aviso($('msgAlertas'), err.message, 'bad'); }
+}
+$('btSalvarAlertas').addEventListener('click', e => ocupado(e.currentTarget, async () => {
+  try {
+    const c = await api('salvarAlertas', estado.token, { diasBoleto: $('cfgDiasBol').value, diasNaoRecebida: $('cfgDiasNR').value });
+    aviso($('msgAlertas'), 'Salvo: boleto avisado ' + c.diasBoleto + (c.diasBoleto === 1 ? ' dia' : ' dias') + ' antes do vencimento; nota não recebida avisada depois de ' + c.diasNaoRecebida + (c.diasNaoRecebida === 1 ? ' dia.' : ' dias.'), 'ok');
+    puxarNotificacoes();
+  } catch (err) { aviso($('msgAlertas'), err.message, 'bad'); }
+}));
+
+/* Relatórios: painel de indicadores */
+async function carregarPainel() {
+  const box = $('pnConteudo');
+  box.innerHTML = '<div class="card"><div class="vazio">Calculando…</div></div>';
+  const dias = Number($('pnPeriodo').value), fim = hojeLocal();
+  const ini = (() => { const d = new Date(fim + 'T12:00:00'); d.setDate(d.getDate() - dias + 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
+  try {
+    const p = await api('painelIndicadores', estado.token, { inicio: ini, fim, loja_id: $('pnLoja').value });
+    const g = p.geral;
+    $('pnInfo').textContent = p.loja + ' · ' + diaBr(p.inicio) + ' a ' + diaBr(p.fim);
+    const barra = (x, boa) => '<div class="barra' + (boa ? ' ok' : '') + '"><i style="width:' + Math.min(100, Math.round(x * 100)) + '%"></i></div>';
+    const tabela = (titulo, dica, cab, linhas, vazio) => '<div class="card"><div><h2>' + titulo + '</h2>' + (dica ? '<div class="muted" style="font-size:13px">' + dica + '</div>' : '') + '</div>' +
+      '<div class="tabela"><table class="resp ind"><thead><tr>' + cab.map(c => '<th' + (c[1] ? ' class="n"' : '') + '>' + c[0] + '</th>').join('') + '</tr></thead><tbody>' +
+      (linhas.length ? linhas.join('') : '<tr><td colspan="' + cab.length + '" class="vazio">' + vazio + '</td></tr>') + '</tbody></table></div></div>';
+    const tipos = Object.keys(p.tiposDivergencia).sort((a, b) => p.tiposDivergencia[b] - p.tiposDivergencia[a]);
+    box.innerHTML =
+      '<div class="indCards">' + [
+        [g.notas, 'Notas recebidas'], [pct(g.pctProblema), 'Com problema (divergência, recusa, boleto ou loja errada)'],
+        [fmtHoras(g.tempoMedioH), 'Tempo médio do recebimento ao lançamento'], [fmtHoras(g.tempoMedianoH), 'Tempo típico (mediana)'],
+        [g.divergencias + ' / ' + g.recusadas, 'Divergências / recusadas'], [g.pendentes, 'Ainda a lançar (do período)'],
+      ].map(c => '<div><b>' + esc(c[0]) + '</b><span>' + esc(c[1]) + '</span></div>').join('') + '</div>' +
+      tabela('Por loja', 'Tempo até o lançamento conta só as notas já lançadas. "A lançar hoje" é a fila atual da loja, de qualquer período.',
+        [['Loja'], ['Notas', 1], ['Divergências', 1], ['Recusadas', 1], ['Sem boleto em mãos', 1], ['Boleto × nota', 1], ['Com problema', 1], ['Tempo médio até lançar', 1], ['A lançar hoje', 1]],
+        p.lojas.map(l => '<tr><td><b>' + esc(l.nome) + '</b></td><td class="n">' + l.notas + '</td><td class="n">' + l.divergencias + '</td><td class="n">' + l.recusadas + '</td><td class="n">' + l.semBoletoEmMaos + '</td><td class="n">' + l.boletoDiverge + '</td>' +
+          '<td class="n">' + pct(l.pctProblema) + barra(l.pctProblema) + '</td><td class="n">' + fmtHoras(l.tempoMedioH) + '<span class="sub">mediana ' + fmtHoras(l.tempoMedianoH) + '</span></td>' +
+          '<td class="n">' + l.pendentesHoje + (l.pendentesHoje ? '<span class="sub">mais antiga: ' + l.diasMaisAntiga + ' dias</span>' : '') + '</td></tr>'), 'Nenhuma nota no período.') +
+      tabela('Por pessoa (quem recebe)', 'Ajuda a ver quem precisa de treinamento: muitas notas sem boleto, divergências ou loja errada.',
+        [['Pessoa'], ['Loja'], ['Notas', 1], ['Divergências', 1], ['Recusadas', 1], ['Sem boleto em mãos', 1], ['Boleto × nota', 1], ['Loja errada', 1], ['Urgentes', 1]],
+        p.pessoas.map(x => '<tr><td><b>' + esc(x.nome) + '</b><span class="sub">' + esc(x.usuario) + '</span></td><td>' + esc(x.loja) + '</td><td class="n">' + x.notas + '</td><td class="n">' + x.divergencias + '</td><td class="n">' + x.recusadas + '</td>' +
+          '<td class="n">' + x.semBoletoEmMaos + '</td><td class="n">' + x.boletoDiverge + '</td><td class="n">' + x.lojaErrada + '</td><td class="n">' + x.urgentes + '</td></tr>'), 'Ninguém recebeu notas no período.') +
+      tabela('Lançamentos (analistas)', 'Notas lançadas no período e tempo desde o recebimento na loja.',
+        [['Analista'], ['Lançadas', 1], ['Urgentes', 1], ['Tempo médio', 1], ['Mediana', 1]],
+        p.analistas.map(a => '<tr><td><b>' + esc(a.nome) + '</b><span class="sub">' + esc(a.usuario) + '</span></td><td class="n">' + a.lancadas + '</td><td class="n">' + a.urgentes + '</td><td class="n">' + fmtHoras(a.tempoMedioH) + '</td><td class="n">' + fmtHoras(a.tempoMedianoH) + '</td></tr>'), 'Nenhuma nota lançada no período.') +
+      tabela('Fornecedores com mais problemas', 'Divergências, recusas e boletos que não batem com a nota. Use na negociação com o fornecedor.',
+        [['Fornecedor'], ['Notas', 1], ['Divergências', 1], ['Recusadas', 1], ['Boleto × nota', 1], ['Com problema', 1], ['Principais divergências']],
+        p.fornecedores.map(f => '<tr><td><b>' + esc(f.nome) + '</b><span class="sub mono">' + esc(f.cnpj) + '</span></td><td class="n">' + f.notas + '</td><td class="n">' + f.divergencias + '</td><td class="n">' + f.recusadas + '</td><td class="n">' + f.boletoDiverge + '</td>' +
+          '<td class="n">' + pct(f.pctProblema) + barra(f.pctProblema) + '</td><td>' + Object.keys(f.tipos).sort((a, b) => f.tipos[b] - f.tipos[a]).map(t => esc(t) + ' (' + f.tipos[t] + ')').join(', ') + '</td></tr>'), 'Nenhum fornecedor com problema no período. 👍') +
+      (tipos.length ? tabela('Tipos de divergência', '', [['Tipo'], ['Quantidade', 1]], tipos.map(t => '<tr><td>' + esc(t) + barra(p.tiposDivergencia[t] / g.divergencias) + '</td><td class="n">' + p.tiposDivergencia[t] + '</td></tr>'), '') : '');
+    box.querySelectorAll('table.ind').forEach(rotularTabela);
+  } catch (err) { box.innerHTML = '<div class="card"><div class="aviso bad">' + esc(err.message) + '</div></div>'; }
+}
+['pnPeriodo', 'pnLoja'].forEach(id => $(id).addEventListener('change', carregarPainel));
 
 /* ───────── Início ───────── */
 estado.siteUrl = '';
